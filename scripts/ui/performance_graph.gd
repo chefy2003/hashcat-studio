@@ -25,6 +25,10 @@ func _ready() -> void:
 	for i in range(max_data_points):
 		data_points.append(0.0)
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		queue_redraw()
+
 func _process(delta: float) -> void:
 	_pulse_phase += delta * 4.0
 	if _pulse_phase > TAU:
@@ -107,8 +111,8 @@ func _draw() -> void:
 	# Bottom-right corner for fill polygon
 	fill_points.append(Vector2(float(data_points.size() - 1) * step, h))
 
-	# 3. Translucent Emerald fill polygon underneath curve
-	if fill_points.size() > 3:
+	# 3. Translucent Emerald fill polygon underneath curve (only when active)
+	if _peak_value > 0.0 and fill_points.size() > 3:
 		draw_polygon(fill_points, [fill_color])
 
 	# 4. Smooth 3.0px Anti-Aliased Emerald Polyline
@@ -133,5 +137,5 @@ func _draw() -> void:
 
 	if _peak_value > 0.0:
 		var label_peak: String = "★ PEAK: " + str(snapped(_peak_value, 0.01)) + " MH/s"
-		draw_string(default_font, Vector2(w - 130, 18), label_peak, HORIZONTAL_ALIGNMENT_RIGHT, -1, font_size, Color("#F59E0B"))
+		draw_string(default_font, Vector2(w - 150, 18), label_peak, HORIZONTAL_ALIGNMENT_RIGHT, 140, font_size, Color("#F59E0B"))
 

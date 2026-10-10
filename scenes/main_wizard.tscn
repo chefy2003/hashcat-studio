@@ -62,6 +62,11 @@ layout_mode = 2
 text = "🖥️ Хардуерна Топология"
 alignment = 0
 
+[node name="BtnMonitoring" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+text = "📊 Мониторинг & Графика"
+alignment = 0
+
 [node name="BtnFlagsGuide" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox"]
 layout_mode = 2
 text = "📖 Справочник (-h)"
@@ -416,6 +421,7 @@ text = "⏹ ПРЕКЪСНИ АТАКА"
 [node name="HashrateGraph" type="Control" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/MonitoringView/MonitorVBox"]
 custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("3_perf_graph")
 
@@ -533,7 +539,7 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="TreeFlags" type="Tree" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Split"]
-custom_minimum_size = Vector2(160, 0)
+custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
 hide_root = true
 
@@ -555,11 +561,13 @@ layout_mode = 2
 
 [node name="BtnInsertFlag" type="Button" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Split/PanelDetails/VBox/Actions"]
 layout_mode = 2
-text = "➕ ДОБАВИ КЪМ КОМАНДАТА"
+size_flags_horizontal = 3
+text = "➕ Добави"
 
 [node name="BtnCopyFlag" type="Button" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Split/PanelDetails/VBox/Actions"]
 layout_mode = 2
-text = "📋 КОПИРАЙ ПРИМЕРА"
+size_flags_horizontal = 3
+text = "📋 Копирай"
 
 [node name="FileDialog" type="FileDialog" parent="."]
 title = "Open a File"

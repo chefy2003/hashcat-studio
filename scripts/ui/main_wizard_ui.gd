@@ -19,6 +19,7 @@ const RawIngestEngineScript = preload("res://scripts/utils/raw_ingest_engine.gd"
 @onready var btn_new_attack: Button = $MainLayout/SidebarPanel/SidebarVBox/BtnNewAttack
 @onready var btn_sessions: Button = $MainLayout/SidebarPanel/SidebarVBox/BtnSessions
 @onready var btn_hardware: Button = $MainLayout/SidebarPanel/SidebarVBox/BtnHardware
+@onready var btn_monitoring: Button = $MainLayout/SidebarPanel/SidebarVBox/BtnMonitoring
 @onready var btn_flags_guide: Button = $MainLayout/SidebarPanel/SidebarVBox/BtnFlagsGuide
 @onready var btn_settings: Button = $MainLayout/SidebarPanel/SidebarVBox/BtnSettings
 @onready var btn_fullscreen: Button = $MainLayout/SidebarPanel/SidebarVBox/BtnFullscreen
@@ -152,6 +153,9 @@ func _connect_signals() -> void:
 		show_wizard_view()
 		wizard_tabs.current_tab = 1
 	)
+	btn_monitoring.pressed.connect(func():
+		show_monitoring_view()
+	)
 	btn_flags_guide.pressed.connect(func():
 		ensure_help_panel_visible()
 		help_tabs.current_tab = 1
@@ -215,6 +219,8 @@ func _connect_signals() -> void:
 func show_monitoring_view() -> void:
 	wizard_tabs.visible = false
 	monitoring_view.visible = true
+	if hashrate_graph != null:
+		hashrate_graph.queue_redraw()
 
 func show_wizard_view() -> void:
 	wizard_tabs.visible = true
@@ -641,6 +647,7 @@ func _apply_localization(lang: String) -> void:
 		btn_new_attack.text = "⚡ Нова Атака"
 		btn_sessions.text = "📁 Хешове & Речници"
 		btn_hardware.text = "🖥️ Хардуерна Топология"
+		btn_monitoring.text = "📊 Мониторинг & Графика"
 		btn_flags_guide.text = "📖 Справочник (-h)"
 		btn_settings.text = "🌐 Език: Български 🇧🇬"
 		btn_start_attack.text = "▶ СТАРТИРАЙ АТАКА"
@@ -651,6 +658,7 @@ func _apply_localization(lang: String) -> void:
 		btn_new_attack.text = "⚡ New Attack"
 		btn_sessions.text = "📁 Hashes & Wordlists"
 		btn_hardware.text = "🖥️ Compute Topology"
+		btn_monitoring.text = "📊 Live Monitoring"
 		btn_flags_guide.text = "📖 Options Guide (-h)"
 		btn_settings.text = "🌐 Language: English 🇬🇧"
 		btn_start_attack.text = "▶ EXECUTE ATTACK"
