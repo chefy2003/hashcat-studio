@@ -74,6 +74,12 @@ layout_mode = 2
 text = "📊 Мониторинг & Графика"
 alignment = 0
 
+[node name="Btn3DOpsDeck" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox" unique_id=948102938]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.0627451, 0.72549, 0.505882, 1)
+text = "🪐 3D Ops Deck"
+alignment = 0
+
 [node name="BtnFlagsGuide" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox" unique_id=762785967]
 layout_mode = 2
 text = "📖 Справочник (-h)"
