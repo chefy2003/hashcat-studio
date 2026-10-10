@@ -1,0 +1,139 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/wizard_animator.gd" id="1_r2da7"]
+
+[node name="WizardStepper" type="PanelContainer" unique_id=1091352529]
+custom_minimum_size = Vector2(800, 500)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MainVBox" type="VBoxContainer" parent="." unique_id=1302490533]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="HeaderPanel" type="PanelContainer" parent="MainVBox" unique_id=887950594]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="StepperHeader" type="HBoxContainer" parent="MainVBox/HeaderPanel" unique_id=2140904360]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="StepIndicator1" type="PanelContainer" parent="MainVBox/HeaderPanel/StepperHeader" unique_id=1205501996]
+custom_minimum_size = Vector2(180, 36)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MainVBox/HeaderPanel/StepperHeader/StepIndicator1" unique_id=306679920]
+layout_mode = 2
+text = "1. Цели & Хешове"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StepIndicator2" type="PanelContainer" parent="MainVBox/HeaderPanel/StepperHeader" unique_id=1861857977]
+custom_minimum_size = Vector2(180, 36)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MainVBox/HeaderPanel/StepperHeader/StepIndicator2" unique_id=908312723]
+layout_mode = 2
+text = "2. Топология & Режими"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StepIndicator3" type="PanelContainer" parent="MainVBox/HeaderPanel/StepperHeader" unique_id=1463182072]
+custom_minimum_size = Vector2(180, 36)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MainVBox/HeaderPanel/StepperHeader/StepIndicator3" unique_id=370026038]
+layout_mode = 2
+text = "3. Финализиране & Старт"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ClipViewport" type="Control" parent="MainVBox" unique_id=1222813200]
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="WizardAnimator" type="Control" parent="MainVBox/ClipViewport" unique_id=249803134]
+anchors_preset = 0
+script = ExtResource("1_r2da7")
+
+[node name="Step1" type="PanelContainer" parent="MainVBox/ClipViewport/WizardAnimator" unique_id=535905609]
+custom_minimum_size = Vector2(800, 380)
+layout_mode = 0
+
+[node name="@VBoxContainer@2" type="VBoxContainer" parent="MainVBox/ClipViewport/WizardAnimator/Step1" unique_id=1716872812]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="@Label@3" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step1/@VBoxContainer@2" unique_id=1425819363]
+layout_mode = 2
+text = "СТЪПКА 1: 1. Цели & Хешове"
+horizontal_alignment = 1
+
+[node name="@Label@4" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step1/@VBoxContainer@2" unique_id=602599168]
+layout_mode = 2
+text = "Конфигурационен панел за стъпка 1 от Hashcat Intelligence Studio."
+horizontal_alignment = 1
+
+[node name="Step2" type="PanelContainer" parent="MainVBox/ClipViewport/WizardAnimator" unique_id=278073405]
+custom_minimum_size = Vector2(800, 380)
+layout_mode = 0
+
+[node name="@VBoxContainer@5" type="VBoxContainer" parent="MainVBox/ClipViewport/WizardAnimator/Step2" unique_id=2145103642]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="@Label@6" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step2/@VBoxContainer@5" unique_id=887639564]
+layout_mode = 2
+text = "СТЪПКА 2: 2. Топология & Режими"
+horizontal_alignment = 1
+
+[node name="@Label@7" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step2/@VBoxContainer@5" unique_id=1736889636]
+layout_mode = 2
+text = "Конфигурационен панел за стъпка 2 от Hashcat Intelligence Studio."
+horizontal_alignment = 1
+
+[node name="Step3" type="PanelContainer" parent="MainVBox/ClipViewport/WizardAnimator" unique_id=1050172734]
+custom_minimum_size = Vector2(800, 380)
+layout_mode = 0
+
+[node name="@VBoxContainer@8" type="VBoxContainer" parent="MainVBox/ClipViewport/WizardAnimator/Step3" unique_id=632142745]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="@Label@9" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step3/@VBoxContainer@8" unique_id=100323230]
+layout_mode = 2
+text = "СТЪПКА 3: 3. Финализиране & Старт"
+horizontal_alignment = 1
+
+[node name="@Label@10" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step3/@VBoxContainer@8" unique_id=1616530380]
+layout_mode = 2
+text = "Конфигурационен панел за стъпка 3 от Hashcat Intelligence Studio."
+horizontal_alignment = 1
+
+[node name="NavBar" type="HBoxContainer" parent="MainVBox" unique_id=1091140684]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BtnBack" type="Button" parent="MainVBox/NavBar" unique_id=770155385]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+text = "⬅ Назад"
+
+[node name="Spacer" type="Control" parent="MainVBox/NavBar" unique_id=804532845]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BtnNext" type="Button" parent="MainVBox/NavBar" unique_id=1218288836]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "Напред ➡"

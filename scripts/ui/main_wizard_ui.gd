@@ -257,6 +257,12 @@ func show_wizard_view() -> void:
 	wizard_tabs.visible = true
 	monitoring_view.visible = false
 
+func toggle_view(show_monitor: bool = true) -> void:
+	if show_monitor:
+		show_monitoring_view()
+	else:
+		show_wizard_view()
+
 func _toggle_maximize_console() -> void:
 	var screen_h: float = workspace_split.size.y
 	if screen_h <= 10.0:
