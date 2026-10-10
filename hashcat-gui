@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Hashcat Intelligence Studio - Desktop Launcher Script
+# ==============================================================================
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Detect Godot engine executable
+GODOT_BIN=""
+if command -v godot &> /dev/null; then
+    GODOT_BIN="godot"
+elif command -v godot4 &> /dev/null; then
+    GODOT_BIN="godot4"
+fi
+
+show_help() {
+    echo "Hashcat Intelligence Studio Launcher"
+    echo "Usage: ./hashcat-gui [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help       Show this help message and exit"
+    echo "  --headless       Launch in headless mode (for CLI checks or testing)"
+    echo "  --debug          Launch with Godot debug console enabled"
+    echo ""
+}
+
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    show_help
+    exit 0
+fi
+
+if [[ -z "$GODOT_BIN" ]]; then
+    echo "Error: Godot 4 binary not found on PATH." >&2
+    echo "Please install Godot 4 (godot or godot4) or add it to your PATH." >&2
+    exit 1
+fi
+
+echo "[+] Starting Hashcat Intelligence Studio via $GODOT_BIN (Isolated Display Driver: OpenGL3)..."
+exec "$GODOT_BIN" --path "$SCRIPT_DIR" --rendering-driver opengl3 "$@"

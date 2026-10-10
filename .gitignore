@@ -1,0 +1,19 @@
+# Godot 4 build & runtime artifacts
+.godot/
+*.translation
+*.import
+export_presets.godot
+
+# C++ GDExtension compilation
+.sconsign.dblite
+*.o
+*.os
+*.so
+*.dylib
+*.dll
+bin/
+
+# Temporary / OS files
+.DS_Store
+*.tmp
+*.log
