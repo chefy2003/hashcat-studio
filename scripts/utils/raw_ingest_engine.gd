@@ -94,7 +94,7 @@ static func _convert_wifi_capture(cap_path: String, hashes_dir: String, lang: St
 		}
 
 	var output: Array = []
-	var exit_code: int = OS.execute(hcx_bin, ["-o", out_path, cap_path], output, true)
+	var _exit_code: int = OS.execute(hcx_bin, ["-o", out_path, cap_path], output, true)
 
 	if FileAccess.file_exists(out_path) and FileAccess.get_file_as_string(out_path).strip_edges().length() > 0:
 		var raw_hashes: String = FileAccess.get_file_as_string(out_path).strip_edges()

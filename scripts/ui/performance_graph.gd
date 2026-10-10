@@ -7,11 +7,11 @@ extends Control
 
 @export var max_data_points: int = 50
 @export var line_color: Color = Color("#10B981") # Modern Emerald Green
-@export var fill_color: Color = Color(0.063, 0.725, 0.506, 0.15) # Translucent Emerald Fill
-@export var bg_color: Color = Color("#0F172A") # Slate 900
-@export var border_color: Color = Color("#334155") # Slate 700
-@export var grid_color: Color = Color(0.2, 0.255, 0.333, 0.4) # Subtle Slate Grid
-@export var text_color: Color = Color("#F8FAFC") # Slate 50
+@export var fill_color: Color = Color(0.063, 0.725, 0.506, 0.18) # Translucent Emerald Fill
+@export var bg_color: Color = Color("#070B12") # Deep Cyber Obsidian
+@export var border_color: Color = Color("#1E293B") # Crisp Slate Border
+@export var grid_color: Color = Color(0.18, 0.24, 0.35, 0.35) # Subtle Slate Grid
+@export var text_color: Color = Color("#F8FAFC") # Crisp White Slate 50
 
 var data_points: Array[float] = []
 var max_value: float = 10.0
@@ -79,14 +79,18 @@ func _draw() -> void:
 	if w <= 10 or h <= 10:
 		return
 
-	# 1. Slate Background with border
+	# 1. Dark Slate Background with clean border
 	draw_rect(Rect2(Vector2.ZERO, size), bg_color)
 	draw_rect(Rect2(Vector2.ZERO, size), border_color, false, 1.0)
 
-	# 2. Subtle horizontal grid guidelines
+	# 2. Subtle horizontal & vertical cyber grid guidelines
 	for pct in [0.25, 0.50, 0.75]:
 		var gy: float = h * (1.0 - pct)
 		draw_line(Vector2(0, gy), Vector2(w, gy), grid_color, 1.0, true)
+
+	for v_pct in [0.2, 0.4, 0.6, 0.8]:
+		var gx: float = w * v_pct
+		draw_line(Vector2(gx, 0), Vector2(gx, h), Color(grid_color.r, grid_color.g, grid_color.b, 0.15), 1.0, true)
 
 	if data_points.size() < 2:
 		return
@@ -138,4 +142,6 @@ func _draw() -> void:
 	if _peak_value > 0.0:
 		var label_peak: String = "★ PEAK: " + str(snapped(_peak_value, 0.01)) + " MH/s"
 		draw_string(default_font, Vector2(w - 150, 18), label_peak, HORIZONTAL_ALIGNMENT_RIGHT, 140, font_size, Color("#F59E0B"))
+	else:
+		draw_string(default_font, Vector2(w - 150, 18), "STANDBY // READY", HORIZONTAL_ALIGNMENT_RIGHT, 140, font_size, Color("#64748B"))
 

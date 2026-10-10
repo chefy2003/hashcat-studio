@@ -261,8 +261,8 @@ static func _get_memory_info() -> Dictionary:
 		return {"used_mb": 0, "total_mb": 0, "pct": 0.0}
 
 	var mem_used_kb: int = mem_total_kb - mem_avail_kb
-	var used_mb: int = mem_used_kb / 1024
-	var total_mb: int = mem_total_kb / 1024
+	var used_mb: int = int(float(mem_used_kb) / 1024.0)
+	var total_mb: int = int(float(mem_total_kb) / 1024.0)
 	var pct: float = (float(mem_used_kb) / float(mem_total_kb)) * 100.0
 
 	return {
@@ -324,7 +324,7 @@ static func _read_sysfs_temp(card_dir: String) -> int:
 				if f != null:
 					var t_str: String = f.get_line().strip_edges()
 					f.close()
-					return t_str.to_int() / 1000
+					return int(float(t_str.to_int()) / 1000.0)
 		entry = dir.get_next()
 
 	return 0

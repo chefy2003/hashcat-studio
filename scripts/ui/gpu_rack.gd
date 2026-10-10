@@ -119,8 +119,7 @@ func _build_rack_ui() -> void:
 		var chk: CheckBox = CheckBox.new()
 		chk.button_pressed = default_enabled
 		chk.text = "ACTIVE" if default_enabled else "ISOLATED"
-		chk.custom_minimum_size = Vector2(75, 0)
-		chk.clip_text = true
+		chk.custom_minimum_size = Vector2(85, 0)
 		chk.toggled.connect(func(pressed: bool): _on_device_toggled(dev_id, pressed, chk, sb, strip))
 		hbox.add_child(chk)
 
@@ -143,9 +142,8 @@ func _build_rack_ui() -> void:
 			lbl_temp.text = "%d Cores | CPU" % cores_num
 		else:
 			lbl_temp.text = "38°C | 0%"
-		lbl_temp.custom_minimum_size = Vector2(75, 0)
+		lbl_temp.custom_minimum_size = Vector2(95, 0)
 		lbl_temp.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		lbl_temp.clip_text = true
 		lbl_temp.add_theme_color_override("font_color", Color("#FFB800"))
 		hbox.add_child(lbl_temp)
 
@@ -155,9 +153,9 @@ func _build_rack_ui() -> void:
 			lbl_status.text = "[CPU ACTIVE]" if is_cpu else "[GPU COMPUTE]"
 		else:
 			lbl_status.text = "[ISOLATED]"
-		lbl_status.custom_minimum_size = Vector2(75, 0)
+		lbl_status.custom_minimum_size = Vector2(110, 0)
 		lbl_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		lbl_status.clip_text = true
+		lbl_status.clip_text = false
 		lbl_status.add_theme_color_override("font_color", Color("#00FF66") if default_enabled else Color("#8B949E"))
 		hbox.add_child(lbl_status)
 

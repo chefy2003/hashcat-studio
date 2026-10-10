@@ -56,15 +56,15 @@ const RawIngestEngineScript = preload("res://scripts/utils/raw_ingest_engine.gd"
 @onready var text_detector_results: RichTextLabel = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashDetectorBox/VBox/TextDetectorResults
 
 # Step 2 Attack & Hardware Nodes
-@onready var opt_attack_mode: OptionButton = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowModeWorkload/ModeGroup/OptAttackMode
-@onready var opt_workload: OptionButton = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowModeWorkload/WorkloadGroup/OptWorkload
-@onready var opt_category: OptionButton = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowHashSelect/CatGroup/OptCategory
-@onready var opt_hash_type: OptionButton = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowHashSelect/AlgorithmGroup/OptHashType
-@onready var gpu_rack: GpuRack = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/GpuRack
-@onready var edit_custom_flags: LineEdit = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/FlagsGroup/EditCustomFlags
-@onready var edit_cli_preview: TextEdit = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/CLIBox/EditCLIPreview
-@onready var btn_start_attack: Button = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/HBoxActions/BtnStart
-@onready var btn_run_benchmark: Button = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/HBoxActions/BtnRunBenchmark
+@onready var opt_attack_mode: OptionButton = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/VBoxMain/ScrollAttack/VBox/RowModeWorkload/ModeGroup/OptAttackMode
+@onready var opt_workload: OptionButton = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/VBoxMain/ScrollAttack/VBox/RowModeWorkload/WorkloadGroup/OptWorkload
+@onready var opt_category: OptionButton = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/VBoxMain/ScrollAttack/VBox/RowHashSelect/CatGroup/OptCategory
+@onready var opt_hash_type: OptionButton = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/VBoxMain/ScrollAttack/VBox/RowHashSelect/AlgorithmGroup/OptHashType
+@onready var gpu_rack: GpuRack = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/VBoxMain/ScrollAttack/VBox/GpuRack
+@onready var edit_custom_flags: LineEdit = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/VBoxMain/ScrollAttack/VBox/FlagsGroup/EditCustomFlags
+@onready var edit_cli_preview: TextEdit = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/VBoxMain/ScrollAttack/VBox/CLIBox/EditCLIPreview
+@onready var btn_start_attack: Button = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/VBoxMain/HBoxActions/BtnStart
+@onready var btn_run_benchmark: Button = $MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/VBoxMain/HBoxActions/BtnRunBenchmark
 
 # Bottom Deck Nodes
 @onready var bottom_console_split: HSplitContainer = $MainLayout/WorkspaceSplit/BottomConsoleSplit
@@ -110,6 +110,17 @@ func _ready() -> void:
 	_update_hardware_telemetry()
 	_apply_localization(_current_lang)
 
+	# Terminal greeting
+	console_log.clear()
+	console_log.append_text("[color=#10B981][b]⚡ HASHCAT INTELLIGENCE STUDIO PRO v2.4[/b][/color] [color=#64748B]// READY[/color]\n")
+	console_log.append_text("[color=#38BDF8]• Топология: Защитен NUMA профил (CPU активен, GPU изолирани за защита).[/color]\n")
+	console_log.append_text("[color=#94A3B8]• Интелигентен ингест: Влачете .cap/.pcap, .7z, .pdf, .zip, .hash за 1-клик автоматичен анализ.[/color]\n")
+	console_log.append_text("[color=#64748B]──────────────────────────────────────────────────────────────────────────────[/color]\n")
+
+	# Placeholder for cracked passwords
+	text_cracked.clear()
+	text_cracked.append_text("[color=#64748B]🔓 Няма намерени пароли в текущата сесия.\nСтартирайте атака за да наблюдавате резултатите тук.[/color]\n")
+
 	# Responsive resize signal
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
@@ -132,33 +143,53 @@ func _setup_bridge() -> void:
 
 func _apply_theme() -> void:
 	ThemeBuilderScript.apply_cyberpunk_theme(self)
-	ThemeBuilderScript.style_action_buttons(btn_start_attack, btn_abort_attack, btn_emergency)
+	ThemeBuilderScript.style_action_buttons(btn_start_attack, btn_abort_attack, btn_emergency, btn_run_benchmark)
+	ThemeBuilderScript.style_preset_buttons([btn_preset_md5, btn_preset_ntlm, btn_preset_wpa2, btn_preset_bcrypt])
+	_update_active_sidebar_btn(btn_new_attack)
 	
+	if logo_label != null:
+		logo_label.text = "⚡ HASHCAT STUDIO PRO"
+		logo_label.add_theme_color_override("font_color", Color("#10B981"))
+	if sys_telemetry != null:
+		sys_telemetry.add_theme_color_override("font_color", Color("#94A3B8"))
+
 	for opt in [opt_category, opt_attack_mode, opt_workload, opt_hash_type, opt_flag_category]:
 		if opt != null:
 			opt.fit_to_longest_item = false
+
+func _update_active_sidebar_btn(active_btn: Button) -> void:
+	var sidebar_buttons: Array[Button] = [
+		btn_new_attack, btn_sessions, btn_hardware, btn_monitoring,
+		btn_flags_guide, btn_settings, btn_fullscreen
+	]
+	ThemeBuilderScript.style_sidebar_buttons(sidebar_buttons, active_btn)
 
 func _connect_signals() -> void:
 	# Sidebar
 	btn_new_attack.pressed.connect(func():
 		show_wizard_view()
 		wizard_tabs.current_tab = 0
+		_update_active_sidebar_btn(btn_new_attack)
 	)
 	btn_sessions.pressed.connect(func():
 		show_wizard_view()
 		wizard_tabs.current_tab = 0
 		edit_hash.grab_focus()
+		_update_active_sidebar_btn(btn_sessions)
 	)
 	btn_hardware.pressed.connect(func():
 		show_wizard_view()
 		wizard_tabs.current_tab = 1
+		_update_active_sidebar_btn(btn_hardware)
 	)
 	btn_monitoring.pressed.connect(func():
 		show_monitoring_view()
+		_update_active_sidebar_btn(btn_monitoring)
 	)
 	btn_flags_guide.pressed.connect(func():
 		ensure_help_panel_visible()
 		help_tabs.current_tab = 1
+		_update_active_sidebar_btn(btn_flags_guide)
 	)
 	btn_settings.pressed.connect(_toggle_language)
 	btn_fullscreen.pressed.connect(toggle_fullscreen)
@@ -234,25 +265,25 @@ func _toggle_maximize_console() -> void:
 	if not _is_console_maximized:
 		workspace_split.split_offset = -int(screen_h * 0.25)
 		_is_console_maximized = true
-		btn_maximize_console.text = "🗗 СВИЙ" if _current_lang == "bg" else "🗗 RESTORE"
+		btn_maximize_console.text = "🗗 Свий" if _current_lang == "bg" else "🗗 Restore"
 	else:
 		workspace_split.split_offset = int(clamp(screen_h * 0.12, 60.0, 140.0))
 		_is_console_maximized = false
-		btn_maximize_console.text = "🗖 РАЗПЪНИ (80%)" if _current_lang == "bg" else "🗖 MAXIMIZE"
+		btn_maximize_console.text = "🗖 80%" if _current_lang == "bg" else "🗖 80%"
 
 func _toggle_collapse_help() -> void:
 	if not _is_help_collapsed:
 		help_panel.visible = false
 		bottom_console_split.split_offset = int(bottom_console_split.size.x)
 		_is_help_collapsed = true
-		btn_collapse_help.text = "⇤ ПОКАЖИ" if _current_lang == "bg" else "⇤ SHOW"
-		btn_toggle_help.text = "💡 +ПОМОЩ" if _current_lang == "bg" else "💡 +HELP"
+		btn_collapse_help.text = "⇤ Покажи" if _current_lang == "bg" else "⇤ Show"
+		btn_toggle_help.text = "💡 +Помощ" if _current_lang == "bg" else "💡 +Help"
 	else:
 		help_panel.visible = true
 		bottom_console_split.split_offset = 0
 		_is_help_collapsed = false
-		btn_collapse_help.text = "⇥ СВИЙ" if _current_lang == "bg" else "⇥ COLLAPSE"
-		btn_toggle_help.text = "💡 ПОМОЩ" if _current_lang == "bg" else "💡 HELP"
+		btn_collapse_help.text = "⇥ Свий" if _current_lang == "bg" else "⇥ Hide"
+		btn_toggle_help.text = "💡 Помощ" if _current_lang == "bg" else "💡 Help"
 
 func ensure_help_panel_visible() -> void:
 	if _is_help_collapsed:
@@ -289,7 +320,10 @@ func _update_hardware_telemetry() -> void:
 	var cpu_pct: float = telem.get("cpu_usage_pct", 0.0)
 	var ram_used: int = telem.get("ram_used_mb", 0)
 	var ram_total: int = telem.get("ram_total_mb", 0)
-	sys_telemetry.text = "CPU: %s%%\nRAM: %s/%sMB" % [str(snapped(cpu_pct, 0.1)), ram_used, ram_total]
+	var ram_used_gb: float = float(ram_used) / 1024.0
+	var ram_total_gb: float = float(ram_total) / 1024.0
+	var ram_pct: float = (float(ram_used) / maxf(float(ram_total), 1.0)) * 100.0
+	sys_telemetry.text = "CPU: %.1f%%\nRAM: %.1f / %.1f GB (%.0f%%)" % [cpu_pct, ram_used_gb, ram_total_gb, ram_pct]
 	if gpu_rack != null:
 		gpu_rack.update_telemetry_sensors(telem)
 
@@ -446,9 +480,9 @@ func _on_detect_hash() -> void:
 	else:
 		var best: Dictionary = matches[0]
 		var id: int = best.get("id", 0)
-		var name: String = best.get("name", "Unknown")
+		var algo_name: String = best.get("name", "Unknown")
 		var conf: String = best.get("confidence", "")
-		text_detector_results.text = "[color=#10B981]✓ Разпознат формат: [b]-m %d[/b] (%s)\n[color=#8B949E]Надеждност: %s[/color][/color]" % [id, name, conf]
+		text_detector_results.text = "[color=#10B981]✓ Разпознат формат: [b]-m %d[/b] (%s)\n[color=#8B949E]Надеждност: %s[/color][/color]" % [id, algo_name, conf]
 		for i in range(opt_hash_type.item_count):
 			if opt_hash_type.get_item_id(i) == id:
 				opt_hash_type.select(i)
@@ -553,7 +587,9 @@ func _filter_flags_tree() -> void:
 
 		for f in cat_groups[c_id]:
 			var item: TreeItem = tree_flags.create_item(cat_header)
-			item.set_text(0, "• " + f.get("flag", "") + " | " + f.get("title", ""))
+			var short_f: String = f.get("flag", "").split(",")[0].strip_edges()
+			item.set_text(0, short_f + " · " + f.get("title", ""))
+			item.set_tooltip_text(0, f.get("flag", "") + " - " + f.get("title", ""))
 			item.set_metadata(0, f)
 			if first_item == null:
 				first_item = item
@@ -644,6 +680,11 @@ func _toggle_language() -> void:
 
 func _apply_localization(lang: String) -> void:
 	if lang == "bg":
+		wizard_tabs.set_tab_title(0, "🎯 1. Цели & Речници")
+		wizard_tabs.set_tab_title(1, "⚙️ 2. Атака & Топология")
+		help_tabs.set_tab_title(0, "🔓 Разбити Пароли (0)")
+		help_tabs.set_tab_title(1, "📖 Справочник (-h)")
+
 		btn_new_attack.text = "⚡ Нова Атака"
 		btn_sessions.text = "📁 Хешове & Речници"
 		btn_hardware.text = "🖥️ Хардуерна Топология"
@@ -654,7 +695,22 @@ func _apply_localization(lang: String) -> void:
 		btn_run_benchmark.text = "⚡ БЕНЧМАРК (-b)"
 		btn_abort_attack.text = "⏹ ПРЕКЪСНИ АТАКА"
 		btn_back_to_setup.text = "🛠️ ОБРАТНО КЪМ НАСТРОЙКИ"
+
+		btn_clear_console.text = "🗑️ Изчисти"
+		btn_maximize_console.text = "🗗 Свий" if _is_console_maximized else "🗖 80%"
+		btn_toggle_help.text = "💡 +Помощ" if _is_help_collapsed else "💡 Помощ"
+		btn_collapse_help.text = "⇤ Покажи" if _is_help_collapsed else "⇥ Свий"
+
+		btn_preset_md5.text = "⚡ MD5 Речник"
+		btn_preset_ntlm.text = "⚡ NTLM + Best64"
+		btn_preset_wpa2.text = "⚡ WPA2 Handshake"
+		btn_preset_bcrypt.text = "⚡ Bcrypt CPU/GPU"
 	else:
+		wizard_tabs.set_tab_title(0, "🎯 1. Hashes & Wordlists")
+		wizard_tabs.set_tab_title(1, "⚙️ 2. Attack & Topology")
+		help_tabs.set_tab_title(0, "🔓 Cracked Passwords (0)")
+		help_tabs.set_tab_title(1, "📖 Flags Guide (-h)")
+
 		btn_new_attack.text = "⚡ New Attack"
 		btn_sessions.text = "📁 Hashes & Wordlists"
 		btn_hardware.text = "🖥️ Compute Topology"
@@ -665,5 +721,14 @@ func _apply_localization(lang: String) -> void:
 		btn_run_benchmark.text = "⚡ BENCHMARK (-b)"
 		btn_abort_attack.text = "⏹ ABORT ATTACK"
 		btn_back_to_setup.text = "🛠️ BACK TO SETUP"
-	_setup_flags_guide()
 
+		btn_clear_console.text = "🗑️ Clear"
+		btn_maximize_console.text = "🗗 Restore" if _is_console_maximized else "🗖 80%"
+		btn_toggle_help.text = "💡 +Help" if _is_help_collapsed else "💡 Help"
+		btn_collapse_help.text = "⇤ Show" if _is_help_collapsed else "⇥ Hide"
+
+		btn_preset_md5.text = "⚡ MD5 Wordlist"
+		btn_preset_ntlm.text = "⚡ NTLM + Best64"
+		btn_preset_wpa2.text = "⚡ WPA2 Handshake"
+		btn_preset_bcrypt.text = "⚡ Bcrypt CPU/GPU"
+	_setup_flags_guide()
