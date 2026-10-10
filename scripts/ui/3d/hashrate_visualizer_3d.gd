@@ -51,13 +51,20 @@ func _setup_multimesh() -> void:
 	bar_mesh.size = Vector3(0.09, 1.0, 0.09)
 	mm.mesh = bar_mesh
 
-	# Material with unshaded neon emissive look (calibrated to avoid bloom blowout)
-	var mat = StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.emission_enabled = true
-	mat.emission = Color("#00a8ff")
-	mat.emission_energy_multiplier = 0.65
-	_multi_mesh_instance.material_override = mat
+	# Thermal gradient spectrum shader: Blue -> Yellow -> Ruby Red
+	var shader = load("res://shaders/hashrate_bar.gdshader")
+	if shader:
+		var s_mat = ShaderMaterial.new()
+		s_mat.shader = shader
+		s_mat.set_shader_parameter("max_spectrum_height", max_height * 0.68)
+		_multi_mesh_instance.material_override = s_mat
+	else:
+		var mat = StandardMaterial3D.new()
+		mat.vertex_color_use_as_albedo = true
+		mat.emission_enabled = true
+		mat.emission = Color("#00a8ff")
+		mat.emission_energy_multiplier = 0.8
+		_multi_mesh_instance.material_override = mat
 	_multi_mesh_instance.multimesh = mm
 
 	_update_instance_transforms()

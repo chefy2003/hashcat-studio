@@ -48,8 +48,8 @@ func _run_test() -> void:
 	print("[PASS] Initial mode is FREE_FLIGHT, terminal clicks are gated/disabled")
 
 	# 3. VERIFY PROXIMITY DETECTION & INTERACTION PROMPT
-	# Move camera into interaction range (< 5.2m from terminal at 6.5, 1.35, -1.0)
-	cam.global_position = Vector3(4.2, 1.35, -0.6)
+	# Move camera into interaction range (< 5.2m from terminal)
+	cam.global_position = Vector3(4.2, 1.35, 1.5)
 	for i in range(3):
 		await process_frame
 	if not term.is_player_in_range:
@@ -67,11 +67,11 @@ func _run_test() -> void:
 	print("[PASS] Proximity detection verified: prompt '[E] ВЛЕЗ В ТЕРМИНАЛА' is visible")
 
 	# Move camera away (> 6.0m)
-	cam.global_position = Vector3(0.0, 1.8, 6.2)
+	cam.global_position = Vector3(0.0, 1.8, 5.8)
 	for i in range(3):
 		await process_frame
 	if term.is_player_in_range:
-		print("FAIL: Player should NOT be in range at 9.7m")
+		print("FAIL: Player should NOT be in range at 7.3m")
 		quit(1)
 		return
 	if term._lbl_interaction_prompt.visible:
@@ -96,7 +96,7 @@ func _run_test() -> void:
 		print("FAIL: Prompt should be hidden when focused")
 		quit(1)
 		return
-	if cam.position.distance_to(Vector3(5.10, 1.35, -0.72)) > 0.05:
+	if cam.position.distance_to(DashboardCamera3DScript.FP_TERMINAL_POS) > 0.05:
 		print("FAIL: Camera not at FP position: ", cam.position)
 		quit(1)
 		return

@@ -28,17 +28,16 @@ window/stretch/aspect="expand"
 window/size/min_viewport_width=800
 window/size/min_viewport_height=450
 
-[rendering]
+[editor]
 
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
-environment/defaults/default_clear_color=Color(0.02745098, 0.03529412, 0.05490196, 1)
+movie_writer/movie_file="/home/deliriumxs/.gemini/antigravity/scratch/hashcat-studio/teaser2.avi"
 
 [layer_names]
 
 3d_physics/layer_1="UI_Panels"
 
-[physics]
+[rendering]
 
-common/enable_object_picking=true
-
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.02745098, 0.03529412, 0.05490196, 1)

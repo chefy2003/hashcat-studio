@@ -8,6 +8,8 @@
 [ext_resource type="Script" path="res://scripts/ui/3d/hashrate_visualizer_3d.gd" id="6_vis06"]
 [ext_resource type="Script" path="res://scripts/ui/3d/gui_3d_panel.gd" id="7_gui07"]
 [ext_resource type="Script" path="res://scripts/ui/3d/holo_terminal_3d.gd" id="8_term08"]
+[ext_resource type="Script" path="res://scripts/ui/3d/energy_conduit_3d.gd" id="9_cond09"]
+[ext_resource type="Script" path="res://scripts/ui/3d/cyber_bulkhead_3d.gd" id="10_bulk10"]
 
 [sub_resource type="Environment" id="Environment_3dops"]
 background_mode = 1
@@ -17,16 +19,16 @@ ambient_light_color = Color(0.0823529, 0.121569, 0.180392, 1)
 tonemap_mode = 3
 glow_enabled = true
 glow_normalized = true
-glow_intensity = 0.9
-glow_strength = 1.0
-glow_bloom = 0.25
-glow_hdr_threshold = 0.8
+glow_intensity = 0.95
+glow_strength = 1.05
+glow_bloom = 0.28
+glow_hdr_threshold = 0.78
 glow_blend_mode = 1
 fog_enabled = true
 fog_light_color = Color(0.019608, 0.043137, 0.078431, 1)
-fog_density = 0.012
-fog_depth_begin = 32.0
-fog_depth_end = 85.0
+fog_density = 0.010
+fog_depth_begin = 35.0
+fog_depth_end = 90.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
 render_priority = 0
@@ -42,6 +44,16 @@ shader_parameter/fade_distance = 60.0
 material = SubResource("ShaderMaterial_floor")
 size = Vector2(90, 90)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dust"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0, 0.94, 1, 0.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_dust"]
+material = SubResource("StandardMaterial3D_dust")
+size = Vector3(0.035, 0.035, 0.035)
+
 [node name="Dashboard3D" type="Node3D" unique_id=892301142]
 script = ExtResource("1_d3d01")
 
@@ -54,19 +66,19 @@ light_color = Color(0.78, 0.88, 1, 1)
 light_energy = 0.45
 
 [node name="RackFillLight" type="OmniLight3D" parent="." unique_id=381920193]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2, 1.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 1.6, 0.3)
 light_color = Color(0.22, 0.74, 0.97, 1)
 light_energy = 0.95
 omni_range = 5.5
 
 [node name="TerminalFillLight" type="OmniLight3D" parent="." unique_id=481920195]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 1.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 1.6, 0.6)
 light_color = Color(0, 0.94, 1, 1)
 light_energy = 0.95
 omni_range = 5.5
 
 [node name="WaveFillLight" type="OmniLight3D" parent="." unique_id=581920194]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.4, -4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4, 1.4, -2.8)
 light_color = Color(0.06, 0.73, 0.51, 1)
 light_energy = 0.9
 omni_range = 5.0
@@ -75,7 +87,7 @@ omni_range = 5.0
 mesh = SubResource("PlaneMesh_floor")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=648102377]
-transform = Transform3D(1, 0, 0, 0, 0.994522, 0.104528, 0, -0.104528, 0.994522, 0, 1.8, 6.2)
+transform = Transform3D(1, 0, 0, 0, 0.994522, 0.104528, 0, -0.104528, 0.994522, 0, 1.8, 5.8)
 current = true
 fov = 68.0
 script = ExtResource("2_cam02")
@@ -84,14 +96,58 @@ script = ExtResource("2_cam02")
 script = ExtResource("4_holo04")
 
 [node name="ServerRack3D" type="Node3D" parent="." unique_id=712948102]
-transform = Transform3D(0.15126, 0, 0.98849, 0, 1, 0, -0.98849, 0, 0.15126, -6.5, 0, -1)
+transform = Transform3D(0.743145, 0, 0.669131, 0, 1, 0, -0.669131, 0, 0.743145, -5, 0, 0.2)
 script = ExtResource("5_rck05")
 
 [node name="HoloTerminal3D" type="Node3D" parent="." unique_id=782910481]
-transform = Transform3D(0.15126, 0, -0.98849, 0, 1, 0, 0.98849, 0, 0.15126, 6.5, 1.35, -1)
+transform = Transform3D(0.669131, 0, -0.743145, 0, 1, 0, 0.743145, 0, 0.669131, 5.2, 1.35, 0.6)
 script = ExtResource("8_term08")
 
 [node name="HashrateVisualizer3D" type="Node3D" parent="." unique_id=839102847]
-transform = Transform3D(0.75617, 0, -0.65438, 0, 1, 0, 0.65438, 0, 0.75617, 4.5, 0.2, -5.2)
+transform = Transform3D(0.882948, 0, -0.469472, 0, 1, 0, 0.469472, 0, 0.882948, 3.4, 0.15, -3.2)
 script = ExtResource("6_vis06")
 
+[node name="ConduitRackToCore" type="Node3D" parent="." groups=["energy_conduits"]]
+script = ExtResource("9_cond09")
+start_point = Vector3(-4.5, 0, 0.2)
+end_point = Vector3(-1.1, 0, 0.1)
+
+[node name="ConduitCoreToWave" type="Node3D" parent="." groups=["energy_conduits"]]
+script = ExtResource("9_cond09")
+start_point = Vector3(1.1, 0, -0.6)
+end_point = Vector3(3.2, 0, -3.0)
+
+[node name="ConduitCoreToTerminal" type="Node3D" parent="." groups=["energy_conduits"]]
+script = ExtResource("9_cond09")
+start_point = Vector3(1.1, 0, 0.4)
+end_point = Vector3(4.6, 0, 0.6)
+
+[node name="Bulkhead_LeftBack" type="Node3D" parent="."]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, -8.5, 0, -6)
+script = ExtResource("10_bulk10")
+
+[node name="Bulkhead_RightBack" type="Node3D" parent="."]
+transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 8.5, 0, -6)
+script = ExtResource("10_bulk10")
+
+[node name="Bulkhead_LeftFront" type="Node3D" parent="."]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, -7.8, 0, 4.2)
+script = ExtResource("10_bulk10")
+
+[node name="Bulkhead_RightFront" type="Node3D" parent="."]
+transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, 7.8, 0, 4.2)
+script = ExtResource("10_bulk10")
+
+[node name="AmbientDataDust" type="CPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+amount = 45
+lifetime = 6.0
+mesh = SubResource("BoxMesh_dust")
+emission_shape = 3
+emission_box_extents = Vector3(8.5, 2.5, 7.5)
+direction = Vector3(0, 1, 0)
+spread = 35.0
+gravity = Vector3(0, 0.04, 0)
+initial_velocity_min = 0.08
+initial_velocity_max = 0.22
+color = Color(0, 0.94, 1, 0.6)

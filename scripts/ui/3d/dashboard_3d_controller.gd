@@ -168,6 +168,13 @@ func _process(delta: float) -> void:
 		var dist = camera.global_position.distance_to(holo_terminal.global_position)
 		holo_terminal.set_player_in_range(dist < 5.2)
 
+	# Sync energy conduits with quantum core thermal load
+	if holo_core and "heat_level" in holo_core:
+		var c_heat: float = holo_core.heat_level
+		for conduit in get_tree().get_nodes_in_group("energy_conduits"):
+			if conduit.has_method("set_heat_level"):
+				conduit.set_heat_level(c_heat)
+
 	_ambient_sim_timer += delta
 	if _ambient_sim_timer < 0.75:
 		return
