@@ -18,7 +18,7 @@ void fragment() {
 	float fade = clamp(1.0 - (dist / fade_distance), 0.0, 1.0);
 	fade = pow(fade, 1.5);
 
-	vec3 col = mix(bg_color.rgb, grid_color.rgb, line_intensity * 0.7);
+	vec3 col = mix(bg_color.rgb, grid_color.rgb * 1.3, line_intensity);
 	ALBEDO = col;
 	ALPHA = fade;
 }
