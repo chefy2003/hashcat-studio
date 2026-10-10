@@ -1,0 +1,567 @@
+[gd_scene load_steps=4 format=3 uid="uid://hashcat_studio_wizard_v1"]
+
+[ext_resource type="Script" path="res://scripts/ui/main_wizard_ui.gd" id="1_main_wizard_ui"]
+[ext_resource type="Script" path="res://scripts/ui/gpu_rack.gd" id="2_gpu_rack"]
+[ext_resource type="Script" path="res://scripts/ui/performance_graph.gd" id="3_perf_graph"]
+
+[node name="MainUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main_wizard_ui")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0588235, 0.0901961, 0.164706, 1)
+
+[node name="MainLayout" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="SidebarPanel" type="PanelContainer" parent="MainLayout"]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+
+[node name="SidebarVBox" type="VBoxContainer" parent="MainLayout/SidebarPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LogoLabel" type="Label" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+text = "⚡ HASHCAT STUDIO"
+horizontal_alignment = 1
+
+[node name="HSep1" type="HSeparator" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+
+[node name="BtnNewAttack" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+text = "⚡ Нова Атака"
+alignment = 0
+
+[node name="BtnSessions" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+text = "📁 Хешове & Речници"
+alignment = 0
+
+[node name="BtnHardware" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+text = "🖥️ Хардуерна Топология"
+alignment = 0
+
+[node name="BtnFlagsGuide" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+text = "📖 Справочник (-h)"
+alignment = 0
+
+[node name="BtnSettings" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+text = "⚙️ Език & Настройки"
+alignment = 0
+
+[node name="BtnFullscreen" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+text = "⛶ Цял Екран (F11)"
+alignment = 0
+
+[node name="Spacer" type="Control" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HSep2" type="HSeparator" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+
+[node name="SysTelemetry" type="Label" parent="MainLayout/SidebarPanel/SidebarVBox"]
+layout_mode = 2
+text = "CPU: 0% | RAM: 0MB"
+horizontal_alignment = 1
+
+[node name="BtnEmergency" type="Button" parent="MainLayout/SidebarPanel/SidebarVBox"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "⚠️ EMERGENCY KILL"
+
+[node name="WorkspaceSplit" type="VSplitContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 120
+
+[node name="TopWorkspace" type="PanelContainer" parent="MainLayout/WorkspaceSplit"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TopVBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="WizardTabs" type="TabContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Step1_Hashes" type="MarginContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollHashes" type="ScrollContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="LabelInputsHeader" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox"]
+layout_mode = 2
+text = "1. ЦЕЛИ И ВХОДНИ ИЗТОЧНИЦИ ЗА РАЗБИВАНЕ"
+
+[node name="HashGroup" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox"]
+layout_mode = 2
+
+[node name="LabelHash" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashGroup"]
+layout_mode = 2
+text = "Файл с целеви хешове (.hash / .txt):"
+
+[node name="HBox" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashGroup"]
+layout_mode = 2
+
+[node name="EditHash" type="LineEdit" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashGroup/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "hashes.txt"
+
+[node name="BtnBrowseHash" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashGroup/HBox"]
+custom_minimum_size = Vector2(40, 36)
+layout_mode = 2
+tooltip_text = "📁 Избери файл с хешове..."
+text = "📁"
+
+[node name="BtnQuickExample" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashGroup/HBox"]
+custom_minimum_size = Vector2(40, 36)
+layout_mode = 2
+tooltip_text = "💡 Зареди примерен хеш и настройки..."
+text = "💡"
+
+[node name="WordlistGroup" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox"]
+layout_mode = 2
+
+[node name="LabelWordlist" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/WordlistGroup"]
+layout_mode = 2
+text = "Основен речник / Wordlist (.txt):"
+
+[node name="HBox" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/WordlistGroup"]
+layout_mode = 2
+
+[node name="EditWordlist" type="LineEdit" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/WordlistGroup/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "rockyou.txt"
+
+[node name="BtnBrowseWordlist" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/WordlistGroup/HBox"]
+custom_minimum_size = Vector2(40, 36)
+layout_mode = 2
+tooltip_text = "📁 Избери речник (Wordlist)..."
+text = "📁"
+
+[node name="RuleGroup" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox"]
+layout_mode = 2
+
+[node name="LabelRules" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/RuleGroup"]
+layout_mode = 2
+text = "Команди за правила (-j / -k):"
+
+[node name="EditRules" type="LineEdit" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/RuleGroup"]
+layout_mode = 2
+placeholder_text = "e.g. c $1 $!"
+
+[node name="HSepPresets" type="HSeparator" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox"]
+layout_mode = 2
+
+[node name="PresetsGroup" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox"]
+layout_mode = 2
+
+[node name="LabelPresetsTitle" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/PresetsGroup"]
+layout_mode = 2
+text = "2. БЪРЗИ СМАРТ ПРЕСЕТИ ЗА АТАКА"
+
+[node name="GridPresets" type="GridContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/PresetsGroup"]
+layout_mode = 2
+columns = 2
+
+[node name="BtnPresetMD5" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/PresetsGroup/GridPresets"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "⚡ MD5 Атака с речник"
+
+[node name="BtnPresetNTLM" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/PresetsGroup/GridPresets"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "⚡ NTLM + Best64 Правила"
+
+[node name="BtnPresetWPA2" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/PresetsGroup/GridPresets"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "⚡ WPA2 Handshake / PMKID"
+
+[node name="BtnPresetBcrypt" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/PresetsGroup/GridPresets"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "⚡ Bcrypt Високо Натоварване"
+
+[node name="HSepDetector" type="HSeparator" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox"]
+layout_mode = 2
+
+[node name="HashDetectorBox" type="PanelContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashDetectorBox"]
+layout_mode = 2
+
+[node name="LabelDetector" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashDetectorBox/VBox"]
+layout_mode = 2
+text = "🔍 АВТОМАТИЧЕН ДЕТЕКТОР НА ХЕШОВЕ (WIZARD)"
+
+[node name="HBoxDetector" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashDetectorBox/VBox"]
+layout_mode = 2
+
+[node name="EditRawHash" type="LineEdit" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashDetectorBox/VBox/HBoxDetector"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Поставете непознат хеш тук (напр. $2a$10$... или MD5)..."
+
+[node name="BtnDetect" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashDetectorBox/VBox/HBoxDetector"]
+layout_mode = 2
+text = "🔍 РАЗПОЗНАЙ"
+
+[node name="TextDetectorResults" type="RichTextLabel" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step1_Hashes/ScrollHashes/VBox/HashDetectorBox/VBox"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+bbcode_enabled = true
+
+[node name="Step2_AttackType" type="MarginContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs"]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollAttack" type="ScrollContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="LabelConfigHeader" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox"]
+layout_mode = 2
+text = "3. КОНФИГУРАТОР НА АТАКАТА И ИЗЧИСЛИТЕЛНА ТОПОЛОГИЯ"
+
+[node name="RowModeWorkload" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ModeGroup" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowModeWorkload"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LabelAttackMode" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowModeWorkload/ModeGroup"]
+layout_mode = 2
+text = "Режим на атаката (-a):"
+
+[node name="OptAttackMode" type="OptionButton" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowModeWorkload/ModeGroup"]
+layout_mode = 2
+fit_to_longest_item = false
+
+[node name="WorkloadGroup" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowModeWorkload"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LabelWorkload" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowModeWorkload/WorkloadGroup"]
+layout_mode = 2
+text = "Профил на натоварване (-w):"
+
+[node name="OptWorkload" type="OptionButton" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowModeWorkload/WorkloadGroup"]
+layout_mode = 2
+fit_to_longest_item = false
+
+[node name="RowHashSelect" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="CatGroup" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowHashSelect"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LabelCategory" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowHashSelect/CatGroup"]
+layout_mode = 2
+text = "Филтър по категория:"
+
+[node name="OptCategory" type="OptionButton" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowHashSelect/CatGroup"]
+layout_mode = 2
+fit_to_longest_item = false
+
+[node name="AlgorithmGroup" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowHashSelect"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LabelHashType" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowHashSelect/AlgorithmGroup"]
+layout_mode = 2
+text = "Хеш алгоритъм (-m):"
+
+[node name="OptHashType" type="OptionButton" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/RowHashSelect/AlgorithmGroup"]
+layout_mode = 2
+fit_to_longest_item = false
+
+[node name="GpuRack" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox"]
+layout_mode = 2
+script = ExtResource("2_gpu_rack")
+
+[node name="FlagsGroup" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox"]
+layout_mode = 2
+
+[node name="LabelCustomFlags" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/FlagsGroup"]
+layout_mode = 2
+text = "Допълнителни CLI флагове:"
+
+[node name="EditCustomFlags" type="LineEdit" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/FlagsGroup"]
+layout_mode = 2
+placeholder_text = "-O --increment"
+
+[node name="CLIBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox"]
+layout_mode = 2
+
+[node name="LabelCLI" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/CLIBox"]
+layout_mode = 2
+text = "АКТИВНА CLI КОМАНДА:"
+
+[node name="EditCLIPreview" type="TextEdit" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/CLIBox"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+editable = false
+
+[node name="HBoxActions" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnStart" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/HBoxActions"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "▶ СТАРТИРАЙ АТАКА"
+
+[node name="BtnRunBenchmark" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/WizardTabs/Step2_AttackType/ScrollAttack/VBox/HBoxActions"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "⚡ БЕНЧМАРК (-b)"
+
+[node name="MonitoringView" type="PanelContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MonitorVBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/MonitoringView"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MonitorHeader" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/MonitoringView/MonitorVBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="LiveStatus" type="Label" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/MonitoringView/MonitorVBox/MonitorHeader"]
+layout_mode = 2
+text = "⚡ СТАТУС: АТАКА В РЕАЛНО ВРЕМЕ..."
+
+[node name="Spacer" type="Control" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/MonitoringView/MonitorVBox/MonitorHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BtnBackToSetup" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/MonitoringView/MonitorVBox/MonitorHeader"]
+layout_mode = 2
+text = "🛠️ ОБРАТНО КЪМ НАСТРОЙКИ"
+
+[node name="BtnAbortAttack" type="Button" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/MonitoringView/MonitorVBox/MonitorHeader"]
+layout_mode = 2
+text = "⏹ ПРЕКЪСНИ АТАКА"
+
+[node name="HashrateGraph" type="Control" parent="MainLayout/WorkspaceSplit/TopWorkspace/TopVBox/MonitoringView/MonitorVBox"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_perf_graph")
+
+[node name="BottomConsoleSplit" type="HSplitContainer" parent="MainLayout/WorkspaceSplit"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ConsolePanel" type="PanelContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit"]
+custom_minimum_size = Vector2(250, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ConsoleVBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/ConsolePanel"]
+layout_mode = 2
+
+[node name="ConsoleHeader" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/ConsolePanel/ConsoleVBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/ConsolePanel/ConsoleVBox/ConsoleHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "🖥️ СИСТЕМНА КОНЗОЛА // LIVE LOGS"
+text_overrun_behavior = 3
+
+[node name="BtnClearConsole" type="Button" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/ConsolePanel/ConsoleVBox/ConsoleHeader"]
+layout_mode = 2
+text = "🗑️ ИЗЧИСТИ"
+
+[node name="BtnMaximizeConsole" type="Button" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/ConsolePanel/ConsoleVBox/ConsoleHeader"]
+layout_mode = 2
+text = "🗖 РАЗПЪНИ (80%)"
+
+[node name="BtnToggleHelp" type="Button" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/ConsolePanel/ConsoleVBox/ConsoleHeader"]
+layout_mode = 2
+text = "💡 ПОМОЩ"
+
+
+[node name="ConsoleLog" type="RichTextLabel" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/ConsolePanel/ConsoleVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_following = true
+
+[node name="HelpPanel" type="PanelContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit"]
+custom_minimum_size = Vector2(240, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HelpVBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel"]
+layout_mode = 2
+
+[node name="HelpHeader" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "💡 ПОМОЩ И РАЗБИТИ ХЕШОВЕ"
+text_overrun_behavior = 3
+
+[node name="BtnCollapseHelp" type="Button" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpHeader"]
+layout_mode = 2
+text = "⇥ СВИЙ"
+
+[node name="HelpTabs" type="TabContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CrackedTab" type="MarginContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs"]
+layout_mode = 2
+
+[node name="TextCracked" type="RichTextLabel" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/CrackedTab"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+
+[node name="FlagsTab" type="MarginContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs"]
+visible = false
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab"]
+layout_mode = 2
+
+[node name="Toolbar" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox"]
+layout_mode = 2
+
+[node name="LabelFlagCat" type="Label" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Toolbar"]
+layout_mode = 2
+text = "Категория:"
+
+[node name="OptFlagCategory" type="OptionButton" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Toolbar"]
+layout_mode = 2
+fit_to_longest_item = false
+text_overrun_behavior = 3
+clip_text = true
+
+[node name="EditFlagSearch" type="LineEdit" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Toolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Търси флаг (-w, -O, temp)..."
+
+[node name="LabelFlagCount" type="Label" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Toolbar"]
+layout_mode = 2
+text = "0 опции"
+
+[node name="Split" type="HSplitContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TreeFlags" type="Tree" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Split"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+hide_root = true
+
+[node name="PanelDetails" type="PanelContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Split"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Split/PanelDetails"]
+layout_mode = 2
+
+[node name="TextFlagIntel" type="RichTextLabel" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Split/PanelDetails/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+autowrap_mode = 2
+
+[node name="Actions" type="HBoxContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Split/PanelDetails/VBox"]
+layout_mode = 2
+
+[node name="BtnInsertFlag" type="Button" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Split/PanelDetails/VBox/Actions"]
+layout_mode = 2
+text = "➕ ДОБАВИ КЪМ КОМАНДАТА"
+
+[node name="BtnCopyFlag" type="Button" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/HelpPanel/HelpVBox/HelpTabs/FlagsTab/VBox/Split/PanelDetails/VBox/Actions"]
+layout_mode = 2
+text = "📋 КОПИРАЙ ПРИМЕРА"
+
+[node name="FileDialog" type="FileDialog" parent="."]
+title = "Open a File"
+size = Vector2i(700, 500)
+access = 2
