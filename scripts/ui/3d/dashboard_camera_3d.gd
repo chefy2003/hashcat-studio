@@ -23,8 +23,8 @@ var _preset_transforms: Dictionary = {
 		"rotation_degrees": Vector3(-4.0, 22.0, 0.0)
 	},
 	ViewPreset.HASHRATE_WAVE: {
-		"position": Vector3(2.7, 1.25, 2.0),
-		"rotation_degrees": Vector3(-6.0, -18.0, 0.0)
+		"position": Vector3(2.6, 1.15, 1.9),
+		"rotation_degrees": Vector3(-4.0, -22.0, 0.0)
 	},
 	ViewPreset.WIDE_OVERVIEW: {
 		"position": Vector3(0.0, 2.2, 4.2),
