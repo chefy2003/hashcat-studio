@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/ui/3d/holo_core_3d.gd" id="4_holo04"]
 [ext_resource type="Script" path="res://scripts/ui/3d/server_rack_3d.gd" id="5_rck05"]
 [ext_resource type="Script" path="res://scripts/ui/3d/hashrate_visualizer_3d.gd" id="6_vis06"]
+[ext_resource type="Script" path="res://scripts/ui/3d/gui_3d_panel.gd" id="7_gui07"]
 
 [sub_resource type="Environment" id="Environment_3dops"]
 background_mode = 1
@@ -20,6 +21,11 @@ glow_strength = 1.0
 glow_bloom = 0.25
 glow_hdr_threshold = 0.8
 glow_blend_mode = 1
+fog_enabled = true
+fog_light_color = Color(0.019608, 0.043137, 0.078431, 1)
+fog_density = 0.02
+fog_depth_begin = 18.0
+fog_depth_end = 45.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
 render_priority = 0
@@ -50,6 +56,23 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.0470588, 0.0784314, 0.137255, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0, 0.941176, 1, 0.45)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 
 [node name="Dashboard3D" type="Node3D" unique_id=892301142]
 script = ExtResource("1_d3d01")
@@ -96,7 +119,67 @@ script = ExtResource("6_vis06")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=930182741]
 
+[node name="TopMargin" type="MarginContainer" parent="HUD" unique_id=581920392]
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 10.0
+offset_right = -16.0
+offset_bottom = 54.0
+grow_horizontal = 2
+
+[node name="Panel" type="PanelContainer" parent="HUD/TopMargin" unique_id=581920393]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
+
+[node name="HBox" type="HBoxContainer" parent="HUD/TopMargin/Panel" unique_id=581920394]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LabelHWTitle" type="Label" parent="HUD/TopMargin/Panel/HBox" unique_id=581920395]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.941176, 1, 1)
+text = "🎛️ ХАРДУЕР:"
+vertical_alignment = 1
+
+[node name="BtnModeCPU" type="Button" parent="HUD/TopMargin/Panel/HBox" unique_id=581920396]
+custom_minimum_size = Vector2(96, 30)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_hud")
+text = "🖥️ CPU"
+
+[node name="BtnModeGPU" type="Button" parent="HUD/TopMargin/Panel/HBox" unique_id=581920397]
+custom_minimum_size = Vector2(96, 30)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_hud")
+text = "⚡ GPU"
+
+[node name="BtnModeALL" type="Button" parent="HUD/TopMargin/Panel/HBox" unique_id=581920398]
+custom_minimum_size = Vector2(96, 30)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_hud")
+text = "⚡+🖥️ ВСИЧКИ"
+
+[node name="VSep" type="VSeparator" parent="HUD/TopMargin/Panel/HBox" unique_id=581920399]
+layout_mode = 2
+
+[node name="DeviceButtonsContainer" type="HBoxContainer" parent="HUD/TopMargin/Panel/HBox" unique_id=581920400]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+
+[node name="Spacer" type="Control" parent="HUD/TopMargin/Panel/HBox" unique_id=581920401]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LabelCliPreview" type="Label" parent="HUD/TopMargin/Panel/HBox" unique_id=581920402]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.0627451, 0.85098, 0.580392, 1)
+text = "CLI: -d 5"
+vertical_alignment = 1
+
 [node name="Margin" type="MarginContainer" parent="HUD" unique_id=194820193]
+
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0

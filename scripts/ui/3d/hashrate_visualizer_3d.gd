@@ -51,12 +51,12 @@ func _setup_multimesh() -> void:
 	bar_mesh.size = Vector3(0.09, 1.0, 0.09)
 	mm.mesh = bar_mesh
 
-	# Material with unshaded neon emissive look
+	# Material with unshaded neon emissive look (calibrated to avoid bloom blowout)
 	var mat = StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
 	mat.emission_enabled = true
-	mat.emission = Color("#00f0ff")
-	mat.emission_energy_multiplier = 1.4
+	mat.emission = Color("#00a8ff")
+	mat.emission_energy_multiplier = 0.65
 	_multi_mesh_instance.material_override = mat
 	_multi_mesh_instance.multimesh = mm
 
@@ -92,12 +92,13 @@ func _update_instance_transforms() -> void:
 		t.origin = Vector3(x, y, z)
 		mm.set_instance_transform(i, t)
 
-		# Color gradient: Cyan (low) -> Emerald (medium) -> Amber/Purple (peak)
-		var ratio = clamp(h / max_height, 0.0, 1.0)
-		var color: Color
-		if ratio < 0.5:
-			color = Color("#00f0ff").lerp(Color("#10b981"), ratio * 2.0)
-		else:
-			color = Color("#10b981").lerp(Color("#f59e0b"), (ratio - 0.5) * 2.0)
+		# Color gradient: Cyan (#00FFFF) to Deep Blue (#0055FF) across bars without overexposure
+		var t_pos: float = float(i) / float(max(sample_count - 1, 1))
+		var color: Color = Color("#00ffff").lerp(Color("#0055ff"), t_pos)
+		
+		# Slight height brightening (staying within saturated cool gamut)
+		var h_ratio: float = clamp(h / max_height, 0.0, 1.0)
+		color = color.lerp(Color("#38bdf8"), h_ratio * 0.35)
 
 		mm.set_instance_color(i, color)
+

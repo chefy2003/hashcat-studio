@@ -180,7 +180,7 @@ func _build_floating_labels() -> void:
 	_lbl_status.position = Vector3(0.0, 2.25, 0.0)
 	add_child(_lbl_status)
 
-	# 3. Live Throughput Rate
+	# 3. Live Throughput Rate (elevated and offset forward to clear HUD and avoid glow blowout)
 	_lbl_rate = Label3D.new()
 	_lbl_rate.text = "THROUGHPUT: 142.8 MH/s  •  PIPELINE: STREAMING"
 	_lbl_rate.font_size = 20
@@ -188,16 +188,16 @@ func _build_floating_labels() -> void:
 	_lbl_rate.outline_modulate = Color("#0f172a")
 	_lbl_rate.outline_size = 5
 	_lbl_rate.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	_lbl_rate.position = Vector3(0.0, 0.64, 0.8)
+	_lbl_rate.position = Vector3(0.0, 1.05, 1.35)
 	add_child(_lbl_rate)
 
 	# 4. Hardware Node Summary
 	_lbl_topology = Label3D.new()
-	_lbl_topology.text = "NODES: CPU #5 (NUMA) + GPU #1 (RX 480) + GPU #2 (ACCEL)"
+	_lbl_topology.text = "NODES: CPU #5 (NUMA) + 4x AMD COMPUTE GPUS"
 	_lbl_topology.font_size = 14
 	_lbl_topology.modulate = Color("#94a3b8")
 	_lbl_topology.outline_modulate = Color("#0f172a")
 	_lbl_topology.outline_size = 3
 	_lbl_topology.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	_lbl_topology.position = Vector3(0.0, 0.46, 0.8)
+	_lbl_topology.position = Vector3(0.0, 0.88, 1.35)
 	add_child(_lbl_topology)

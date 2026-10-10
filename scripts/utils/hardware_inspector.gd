@@ -101,7 +101,6 @@ static func _finalize_device_dict(raw: Dictionary, backend: String) -> Dictionar
 	var type_str: String = raw.get("type_str", "").to_upper()
 	var name: String = raw.get("name", "Compute Device #" + str(raw.get("id", 1)))
 	var name_lower: String = name.to_lower()
-
 	if type_str == "CPU" or "cpu" in name_lower or "xeon" in name_lower or "ryzen" in name_lower:
 		dev_type = "CPU"
 	elif backend in ["CUDA", "HIP"] or "radeon" in name_lower or "geforce" in name_lower or "nvidia" in name_lower or "rtx" in name_lower or "gtx" in name_lower:
@@ -110,6 +109,22 @@ static func _finalize_device_dict(raw: Dictionary, backend: String) -> Dictionar
 		dev_type = "GPU"
 	else:
 		dev_type = "CPU"
+
+	if dev_type == "CPU":
+		if "xeon" in name_lower:
+			if "e5-2696" in name_lower:
+				name = "Intel Xeon E5-2696 v2"
+			elif "e5" in name_lower:
+				name = "Intel Xeon E5 Series"
+			else:
+				name = "Intel Xeon CPU"
+		elif "ryzen" in name_lower:
+			name = "AMD Ryzen Processor"
+		elif name.begins_with("cpu-"):
+			var clean = name.substr(4)
+			if "-" in clean:
+				clean = clean.split("-")[-1]
+			name = clean.strip_edges()
 
 	var mem_str: String = raw.get("memory", "")
 	if "(" in mem_str:
@@ -129,6 +144,35 @@ static func _finalize_device_dict(raw: Dictionary, backend: String) -> Dictionar
 		# By default, CPU is enabled, GPUs start ISOLATED for NUMA/system protection
 		"enabled": (dev_type == "CPU")
 	}
+
+static func set_device_enabled(dev_id: int, enabled: bool) -> void:
+	for d in _cached_devices:
+		if d.get("id") == dev_id:
+			d["enabled"] = enabled
+			return
+
+static func is_device_enabled(dev_id: int) -> bool:
+	for d in _cached_devices:
+		if d.get("id") == dev_id:
+			return d.get("enabled", false)
+	return false
+
+static func get_active_device_ids() -> Array[int]:
+	var ids: Array[int] = []
+	for d in _cached_devices:
+		if d.get("enabled", false):
+			ids.append(d.get("id", 0))
+	ids.sort()
+	return ids
+
+static func get_cli_device_flag() -> String:
+	var ids = get_active_device_ids()
+	if ids.is_empty():
+		return ""
+	var str_ids: PackedStringArray = []
+	for id in ids:
+		str_ids.append(str(id))
+	return "-d " + ",".join(str_ids)
 
 static func detect_available_devices() -> Array[Dictionary]:
 	return probe_compute_devices()
