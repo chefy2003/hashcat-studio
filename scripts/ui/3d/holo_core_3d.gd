@@ -85,10 +85,10 @@ func _build_pedestal() -> void:
 	bezel.position.y = 0.26
 
 	var bezel_mat = StandardMaterial3D.new()
-	bezel_mat.albedo_color = Color("#00f0ff")
+	bezel_mat.albedo_color = Color("#00b4d8")
 	bezel_mat.emission_enabled = true
-	bezel_mat.emission = Color("#00f0ff")
-	bezel_mat.emission_energy_multiplier = 2.0
+	bezel_mat.emission = Color("#00b4d8")
+	bezel_mat.emission_energy_multiplier = 1.15
 	bezel.material_override = bezel_mat
 	add_child(bezel)
 
@@ -142,19 +142,19 @@ func _build_core_sphere() -> void:
 	_core_sphere.position.y = 1.35
 
 	var sph_mat = StandardMaterial3D.new()
-	sph_mat.albedo_color = Color("#00f0ff")
+	sph_mat.albedo_color = Color("#0096c7")
 	sph_mat.emission_enabled = true
-	sph_mat.emission = Color("#00f0ff")
-	sph_mat.emission_energy_multiplier = 2.8 # Glow Bloom
+	sph_mat.emission = Color("#00b4d8")
+	sph_mat.emission_energy_multiplier = 1.25 # Clean saturated neon, no blowout
 	_core_sphere.material_override = sph_mat
 	add_child(_core_sphere)
 
 	# Core Point Light
 	_core_light = OmniLight3D.new()
 	_core_light.position.y = 1.35
-	_core_light.light_color = Color("#00f0ff")
-	_core_light.light_energy = 1.4
-	_core_light.omni_range = 5.5
+	_core_light.light_color = Color("#00b4d8")
+	_core_light.light_energy = 0.6
+	_core_light.omni_range = 4.2
 	add_child(_core_light)
 
 func _build_floating_labels() -> void:

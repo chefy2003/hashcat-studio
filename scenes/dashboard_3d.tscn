@@ -15,20 +15,21 @@ ambient_light_color = Color(0.0823529, 0.121569, 0.180392, 1)
 tonemap_mode = 3
 glow_enabled = true
 glow_normalized = true
-glow_intensity = 1.2
-glow_strength = 1.2
-glow_bloom = 0.8
+glow_intensity = 0.9
+glow_strength = 1.0
+glow_bloom = 0.25
 glow_hdr_threshold = 0.8
-glow_blend_mode = 0
+glow_blend_mode = 1
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
 render_priority = 0
 shader = ExtResource("3_grid03")
-shader_parameter/grid_color = Color(0.0627451, 0.72549, 0.505882, 0.75)
+shader_parameter/grid_color = Color(0.0627451, 0.85098, 0.580392, 1)
 shader_parameter/bg_color = Color(0.027451, 0.035294, 0.054902, 1)
 shader_parameter/grid_scale = 36.0
-shader_parameter/line_thickness = 1.0
-shader_parameter/fade_distance = 20.0
+shader_parameter/line_thickness = 1.3
+shader_parameter/glow_halo_width = 4.5
+shader_parameter/fade_distance = 28.0
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
 material = SubResource("ShaderMaterial_floor")
@@ -90,7 +91,7 @@ transform = Transform3D(0.913545, 0, 0.406737, 0, 1, 0, -0.406737, 0, 0.913545, 
 script = ExtResource("5_rck05")
 
 [node name="HashrateVisualizer3D" type="Node3D" parent="." unique_id=839102847]
-transform = Transform3D(0.999391, 0, -0.034899, 0, 1, 0, 0.034899, 0, 0.999391, 3.5, 0.15, -0.5)
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, 3.5, 0.15, -0.5)
 script = ExtResource("6_vis06")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=930182741]
