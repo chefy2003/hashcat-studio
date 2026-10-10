@@ -19,8 +19,8 @@ var _preset_transforms: Dictionary = {
 		"rotation_degrees": Vector3(-4.0, 0.0, 0.0)
 	},
 	ViewPreset.RACK_TELEMETRY: {
-		"position": Vector3(-2.2, 1.45, 1.6),
-		"rotation_degrees": Vector3(-12.0, 32.0, 0.0)
+		"position": Vector3(-2.0, 1.1, 2.1),
+		"rotation_degrees": Vector3(-4.0, 24.0, 0.0)
 	},
 	ViewPreset.HASHRATE_WAVE: {
 		"position": Vector3(2.2, 1.45, 1.6),

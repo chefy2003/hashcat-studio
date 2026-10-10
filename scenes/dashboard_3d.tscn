@@ -3,10 +3,9 @@
 [ext_resource type="Script" path="res://scripts/ui/3d/dashboard_3d_controller.gd" id="1_d3d01"]
 [ext_resource type="Script" path="res://scripts/ui/3d/dashboard_camera_3d.gd" id="2_cam02"]
 [ext_resource type="Shader" path="res://shaders/cyber_grid_floor.gdshader" id="3_grid03"]
-[ext_resource type="Script" path="res://scripts/ui/3d/viewport_interactor_3d.gd" id="4_act04"]
-[ext_resource type="PackedScene" path="res://scenes/wizard_animator.tscn" id="5_wiz05"]
-[ext_resource type="Script" path="res://scripts/ui/3d/server_rack_3d.gd" id="6_rck06"]
-[ext_resource type="Script" path="res://scripts/ui/3d/hashrate_visualizer_3d.gd" id="7_vis07"]
+[ext_resource type="Script" path="res://scripts/ui/3d/holo_core_3d.gd" id="4_holo04"]
+[ext_resource type="Script" path="res://scripts/ui/3d/server_rack_3d.gd" id="5_rck05"]
+[ext_resource type="Script" path="res://scripts/ui/3d/hashrate_visualizer_3d.gd" id="6_vis06"]
 
 [sub_resource type="Environment" id="Environment_3dops"]
 background_mode = 1
@@ -31,12 +30,6 @@ shader_parameter/fade_distance = 20.0
 [sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
 material = SubResource("ShaderMaterial_floor")
 size = Vector2(40, 40)
-
-[sub_resource type="QuadMesh" id="QuadMesh_screen"]
-size = Vector2(3.6, 2.05)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_hit"]
-size = Vector3(3.6, 2.05, 0.1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud"]
 content_margin_left = 14.0
@@ -86,36 +79,16 @@ current = true
 fov = 68.0
 script = ExtResource("2_cam02")
 
-[node name="DisplayAnchor" type="Node3D" parent="." unique_id=581920334]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, 0)
-
-[node name="CurvedDisplay3D" type="MeshInstance3D" parent="DisplayAnchor" unique_id=274910283]
-mesh = SubResource("QuadMesh_screen")
-
-[node name="SubViewport" type="SubViewport" parent="DisplayAnchor" unique_id=741029482]
-transparent_bg = true
-handle_input_locally = false
-size = Vector2i(1280, 720)
-render_target_update_mode = 4
-
-[node name="WizardStepper" parent="DisplayAnchor/SubViewport" instance=ExtResource("5_wiz05")]
-
-[node name="DisplayArea3D" type="Area3D" parent="DisplayAnchor" node_paths=PackedStringArray("target_viewport") unique_id=891048291]
-script = ExtResource("4_act04")
-target_viewport = NodePath("../SubViewport")
-mesh_width = 3.6
-mesh_height = 2.05
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="DisplayAnchor/DisplayArea3D" unique_id=314810293]
-shape = SubResource("BoxShape3D_hit")
+[node name="HoloCore3D" type="Node3D" parent="." unique_id=641029381]
+script = ExtResource("4_holo04")
 
 [node name="ServerRack3D" type="Node3D" parent="." unique_id=712948102]
 transform = Transform3D(0.927184, 0, 0.374607, 0, 1, 0, -0.374607, 0, 0.927184, -2.7, 0, -0.4)
-script = ExtResource("6_rck06")
+script = ExtResource("5_rck05")
 
 [node name="HashrateVisualizer3D" type="Node3D" parent="." unique_id=839102847]
 transform = Transform3D(0.927184, 0, -0.374607, 0, 1, 0, 0.374607, 0, 0.927184, 2.5, 0.15, -0.4)
-script = ExtResource("7_vis07")
+script = ExtResource("6_vis06")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=930182741]
 
@@ -143,10 +116,10 @@ text = "🪐 3D OPS DECK // ONLINE"
 vertical_alignment = 1
 
 [node name="BtnViewFront" type="Button" parent="HUD/Margin/HBox" unique_id=294810293]
-custom_minimum_size = Vector2(130, 38)
+custom_minimum_size = Vector2(160, 38)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_hud")
-text = "🖥️ ЕКРАН (1)"
+text = "⚛️ ХОЛО-ЯДРО (1)"
 
 [node name="BtnViewRack" type="Button" parent="HUD/Margin/HBox" unique_id=481920311]
 custom_minimum_size = Vector2(150, 38)

@@ -18,9 +18,11 @@ var _led_strip: MeshInstance3D
 var _status_led: MeshInstance3D
 var _led_material: StandardMaterial3D
 var _status_material: StandardMaterial3D
+var _lbl_telemetry: Label3D
 
 func _ready() -> void:
 	_build_chassis_geometry()
+	_build_unit_label()
 
 func setup_device(p_id: int, p_name: String, p_is_cpu: bool = false) -> void:
 	device_id = p_id
@@ -28,12 +30,18 @@ func setup_device(p_id: int, p_name: String, p_is_cpu: bool = false) -> void:
 	is_cpu = p_is_cpu
 	if is_cpu and _fan2_mesh:
 		_fan2_mesh.visible = false # Single fan for CPU cooler
+	_update_label_text()
 
 func set_telemetry(temp_celsius: float, fan_pct: float, util_pct: float) -> void:
 	current_temp = temp_celsius
 	current_fan_percent = fan_pct
 	current_util_percent = util_pct
 	_update_leds()
+	_update_label_text()
+
+func _update_label_text() -> void:
+	if _lbl_telemetry:
+		_lbl_telemetry.text = "%s  |  %.0f°C  |  FAN %.0f%%  |  LOAD %.0f%%" % [device_name, current_temp, current_fan_percent, current_util_percent]
 
 func _process(delta: float) -> void:
 	# Rotate fans dynamically based on fan percentage (minimum idle rotation if active)
@@ -72,6 +80,19 @@ func _update_leds() -> void:
 		else:
 			_status_material.emission = Color("#334155")
 			_status_material.emission_energy_multiplier = 0.5
+
+func _build_unit_label() -> void:
+	_lbl_telemetry = Label3D.new()
+	_lbl_telemetry.font_size = 20
+	_lbl_telemetry.pixel_size = 0.0028
+	_lbl_telemetry.modulate = Color("#e2e8f0")
+	_lbl_telemetry.outline_modulate = Color("#07090e")
+	_lbl_telemetry.outline_size = 4
+	_lbl_telemetry.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_lbl_telemetry.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_lbl_telemetry.position = Vector3(0.0, -0.04, 0.58)
+	add_child(_lbl_telemetry)
+	_update_label_text()
 
 func _build_chassis_geometry() -> void:
 	# 1. Main GPU/Card Body (Dark Slate Titanium)
