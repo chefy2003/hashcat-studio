@@ -6,19 +6,19 @@ extends RefCounted
 ## Palette: Deep Obsidian (#0B0F19), Slate Surface (#111827), Sub-pixel Borders (#1E293B / #263346),
 ## Vibrant Emerald (#10B981), Electric Cyan (#06B6D4), Warning Amber (#F59E0B), Crimson (#EF4444).
 
-const COLOR_BG_DARK       = Color("#0B0F19") # Deep Obsidian Void
-const COLOR_PANEL_BG      = Color("#111827") # Dark Slate / Card Surface
-const COLOR_PANEL_BORDER  = Color("#1F2937") # Structural Sub-pixel Border
+const COLOR_BG_DARK       = Color("#07090e") # Цялостен фон на програмата
+const COLOR_PANEL_BG      = Color("#0d1321") # Фон на заоблените карти и панели
+const COLOR_PANEL_BORDER  = Color("#1e293b") # Контур на картите
 const COLOR_PANEL_BORDER_LIGHT = Color("#334155") # Interactive Border
-const COLOR_CARD_BG       = Color("#162032") # Elevated Inset Card Surface
-const COLOR_BUTTON_BG     = Color("#1E293B") # Slate 800 Interactive Button
-const COLOR_BUTTON_HOVER  = Color("#2D3B55") # Hover Highlight
-const COLOR_ACCENT_GREEN  = Color("#10B981") # Cyber Emerald 500
+const COLOR_CARD_BG       = Color("#151f32") # Elevated Inset Card Surface
+const COLOR_BUTTON_BG     = Color("#151f32") # Slate 800 Interactive Button
+const COLOR_BUTTON_HOVER  = Color("#1e2e4a") # Hover Highlight
+const COLOR_ACCENT_GREEN  = Color("#10b981") # Светещ изумруден акцент
 const COLOR_ACCENT_CYAN   = Color("#06B6D4") # Electric Cyan 500
 const COLOR_ACCENT_AMBER  = Color("#F59E0B") # Warning Amber 500
 const COLOR_ACCENT_RED    = Color("#EF4444") # Crimson Red 500
-const COLOR_TEXT_MAIN     = Color("#F8FAFC") # Crisp Slate 50 Typography
-const COLOR_TEXT_MUTED    = Color("#94A3B8") # Cool Slate 400 Secondary Text
+const COLOR_TEXT_MAIN     = Color("#f1f5f9") # Чисто бял зачетлив текст
+const COLOR_TEXT_MUTED    = Color("#64748b") # Приглушен сив за детайли
 
 static func apply_cyberpunk_theme(root_control: Control = null) -> Theme:
 	var custom_theme: Theme = Theme.new()
@@ -37,6 +37,15 @@ static func apply_cyberpunk_theme(root_control: Control = null) -> Theme:
 		root_control.theme = custom_theme
 	return custom_theme
 
+static func apply_extended_styles(t: Theme) -> void:
+	_apply_base_colors(t)
+	_apply_line_edit_styles(t)
+	_apply_scroll_styles(t)
+	_apply_popup_styles(t)
+	_apply_tree_styles(t)
+	_apply_separator_styles(t)
+	_apply_progress_styles(t)
+
 static func _apply_base_colors(t: Theme) -> void:
 	t.set_color("font_color", "Label", COLOR_TEXT_MAIN)
 	t.set_color("font_color", "Button", COLOR_TEXT_MAIN)
@@ -53,16 +62,16 @@ static func _apply_base_colors(t: Theme) -> void:
 static func _apply_panel_styles(t: Theme) -> void:
 	var style_panel: StyleBoxFlat = StyleBoxFlat.new()
 	style_panel.bg_color = COLOR_PANEL_BG
-	style_panel.set_corner_radius_all(10)
+	style_panel.set_corner_radius_all(14)
 	style_panel.border_width_left = 1
 	style_panel.border_width_top = 1
 	style_panel.border_width_right = 1
 	style_panel.border_width_bottom = 1
 	style_panel.border_color = COLOR_PANEL_BORDER
-	style_panel.shadow_color = Color(0, 0, 0, 0.35)
-	style_panel.shadow_size = 6
-	style_panel.shadow_offset = Vector2(0, 3)
-	style_panel.set_content_margin_all(10.0)
+	style_panel.shadow_color = Color(0, 0, 0, 0.4)
+	style_panel.shadow_size = 12
+	style_panel.shadow_offset = Vector2(0, 6)
+	style_panel.set_content_margin_all(15.0)
 
 	t.set_stylebox("panel", "Panel", style_panel)
 	t.set_stylebox("panel", "PanelContainer", style_panel)
@@ -70,42 +79,37 @@ static func _apply_panel_styles(t: Theme) -> void:
 
 # Modern rounded buttons with hover/pressed states and clean focus
 static func _apply_button_styles(t: Theme) -> void:
-	var style_btn_normal: StyleBoxFlat = StyleBoxFlat.new()
-	style_btn_normal.bg_color = COLOR_BUTTON_BG
-	style_btn_normal.set_corner_radius_all(8)
-	style_btn_normal.border_width_left = 1
-	style_btn_normal.border_width_top = 1
-	style_btn_normal.border_width_right = 1
-	style_btn_normal.border_width_bottom = 1
-	style_btn_normal.border_color = COLOR_PANEL_BORDER_LIGHT
-	style_btn_normal.content_margin_left = 12
-	style_btn_normal.content_margin_right = 12
-	style_btn_normal.content_margin_top = 7
-	style_btn_normal.content_margin_bottom = 7
+	var btn_normal: StyleBoxFlat = StyleBoxFlat.new()
+	btn_normal.bg_color = Color("#151f32")
+	btn_normal.set_corner_radius_all(10)
+	btn_normal.border_width_bottom = 2
+	btn_normal.border_color = COLOR_PANEL_BORDER
+	btn_normal.content_margin_left = 18
+	btn_normal.content_margin_right = 18
+	btn_normal.content_margin_top = 10
+	btn_normal.content_margin_bottom = 10
 
-	var style_btn_hover: StyleBoxFlat = style_btn_normal.duplicate() as StyleBoxFlat
-	style_btn_hover.bg_color = COLOR_BUTTON_HOVER
-	style_btn_hover.border_color = Color("#475569")
-	style_btn_hover.shadow_color = Color(0, 0, 0, 0.2)
-	style_btn_hover.shadow_size = 4
+	var btn_hover: StyleBoxFlat = btn_normal.duplicate() as StyleBoxFlat
+	btn_hover.bg_color = Color("#1e2e4a")
+	btn_hover.border_color = COLOR_ACCENT_GREEN
 
-	var style_btn_pressed: StyleBoxFlat = style_btn_normal.duplicate() as StyleBoxFlat
-	style_btn_pressed.bg_color = Color("#0F172A")
-	style_btn_pressed.border_color = COLOR_ACCENT_GREEN
+	var btn_pressed: StyleBoxFlat = btn_normal.duplicate() as StyleBoxFlat
+	btn_pressed.bg_color = Color("#0d1321")
+	btn_pressed.border_width_bottom = 0
 
-	var style_btn_disabled: StyleBoxFlat = style_btn_normal.duplicate() as StyleBoxFlat
+	var style_btn_disabled: StyleBoxFlat = btn_normal.duplicate() as StyleBoxFlat
 	style_btn_disabled.bg_color = Color(COLOR_BUTTON_BG, 0.4)
 	style_btn_disabled.border_color = Color(COLOR_PANEL_BORDER, 0.4)
 
-	t.set_stylebox("normal", "Button", style_btn_normal)
-	t.set_stylebox("hover", "Button", style_btn_hover)
-	t.set_stylebox("pressed", "Button", style_btn_pressed)
-	t.set_stylebox("disabled", "Button", style_btn_disabled)
+	t.set_stylebox("normal", "Button", btn_normal)
+	t.set_stylebox("hover", "Button", btn_hover)
+	t.set_stylebox("pressed", "Button", btn_pressed)
 	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
+	t.set_stylebox("disabled", "Button", style_btn_disabled)
 
-	t.set_stylebox("normal", "OptionButton", style_btn_normal)
-	t.set_stylebox("hover", "OptionButton", style_btn_hover)
-	t.set_stylebox("pressed", "OptionButton", style_btn_pressed)
+	t.set_stylebox("normal", "OptionButton", btn_normal)
+	t.set_stylebox("hover", "OptionButton", btn_hover)
+	t.set_stylebox("pressed", "OptionButton", btn_pressed)
 	t.set_stylebox("disabled", "OptionButton", style_btn_disabled)
 	t.set_stylebox("focus", "OptionButton", StyleBoxEmpty.new())
 
@@ -168,36 +172,28 @@ static func _apply_scroll_styles(t: Theme) -> void:
 	t.set_stylebox("scroll", "HScrollBar", StyleBoxEmpty.new())
 	t.set_stylebox("panel", "ScrollContainer", StyleBoxEmpty.new())
 
-# Modern TabContainer styling: Sleek active pill with bottom emerald highlight
+# Minimalist tab tiles with glowing emerald highlight
 static func _apply_tab_styles(t: Theme) -> void:
-	var sb_tab_selected: StyleBoxFlat = StyleBoxFlat.new()
-	sb_tab_selected.bg_color = COLOR_PANEL_BG
-	sb_tab_selected.set_corner_radius_all(6)
-	sb_tab_selected.border_width_bottom = 2
-	sb_tab_selected.border_color = COLOR_ACCENT_GREEN
-	sb_tab_selected.content_margin_left = 14
-	sb_tab_selected.content_margin_right = 14
-	sb_tab_selected.content_margin_top = 7
-	sb_tab_selected.content_margin_bottom = 7
-	t.set_stylebox("tab_selected", "TabContainer", sb_tab_selected)
+	var tab_selected: StyleBoxFlat = StyleBoxFlat.new()
+	tab_selected.bg_color = COLOR_PANEL_BG
+	tab_selected.set_corner_radius_all(10)
+	tab_selected.border_width_bottom = 3
+	tab_selected.border_color = COLOR_ACCENT_GREEN
+	tab_selected.content_margin_left = 16
+	tab_selected.content_margin_right = 16
 
-	var sb_tab_hovered: StyleBoxFlat = sb_tab_selected.duplicate() as StyleBoxFlat
-	sb_tab_hovered.bg_color = COLOR_BUTTON_HOVER
-	sb_tab_hovered.border_color = Color.WHITE
-	t.set_stylebox("tab_hovered", "TabContainer", sb_tab_hovered)
+	var tab_unselected: StyleBoxFlat = StyleBoxFlat.new()
+	tab_unselected.bg_color = Color(0, 0, 0, 0)
+	tab_unselected.content_margin_left = 16
+	tab_unselected.content_margin_right = 16
 
-	var sb_tab_unselected: StyleBoxFlat = StyleBoxFlat.new()
-	sb_tab_unselected.bg_color = Color("#070B12")
-	sb_tab_unselected.set_corner_radius_all(6)
-	sb_tab_unselected.content_margin_left = 14
-	sb_tab_unselected.content_margin_right = 14
-	sb_tab_unselected.content_margin_top = 7
-	sb_tab_unselected.content_margin_bottom = 7
-	t.set_stylebox("tab_unselected", "TabContainer", sb_tab_unselected)
+	var tab_hovered: StyleBoxFlat = tab_selected.duplicate() as StyleBoxFlat
+	tab_hovered.border_color = Color.WHITE
 
-	var sb_tab_disabled: StyleBoxFlat = sb_tab_unselected.duplicate() as StyleBoxFlat
-	sb_tab_disabled.bg_color = Color(COLOR_BG_DARK, 0.4)
-	t.set_stylebox("tab_disabled", "TabContainer", sb_tab_disabled)
+	t.set_stylebox("tab_selected", "TabContainer", tab_selected)
+	t.set_stylebox("tab_hovered", "TabContainer", tab_hovered)
+	t.set_stylebox("tab_unselected", "TabContainer", tab_unselected)
+
 
 	t.set_stylebox("tab_focus", "TabContainer", StyleBoxEmpty.new())
 

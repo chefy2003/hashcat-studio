@@ -141,17 +141,140 @@ func _setup_bridge() -> void:
 	_bridge.process_finished.connect(_on_process_finished)
 	_bridge.emergency_stopped.connect(_on_emergency_stopped)
 
+# ==============================================================================
+#  NEXT-GEN CYBERPUNK THEME GENERATOR - GODOT 4
+# ==============================================================================
+# Цветова схема (Obsidian / Neon Emerald / Deep Steel)
+const COLOR_MAIN_BG      = Color("#07090e") # Цялостен фон на програмата
+const COLOR_PANEL_BG     = Color("#0d1321") # Фон на заоблените карти и панели
+const COLOR_PANEL_BORDER = Color("#1e293b") # Контур на картите
+const COLOR_ACCENT       = Color("#10b981") # Светещ изумруден акцент
+const COLOR_TEXT_PRIMARY = Color("#f1f5f9") # Чисто бял зачетлив текст
+const COLOR_TEXT_MUTED   = Color("#64748b") # Приглушен сив за детайли
+
+## 1. Заоблени картички с мека подсветка (Shadow Glow)
+func _create_panel_style(t: Theme) -> void:
+	var style_panel = StyleBoxFlat.new()
+	style_panel.bg_color = COLOR_PANEL_BG
+	style_panel.set_corner_radius_all(14) # Ключът към "не-квадратната" визия!
+	style_panel.border_width_left = 1
+	style_panel.border_width_top = 1
+	style_panel.border_width_right = 1
+	style_panel.border_width_bottom = 1
+	style_panel.border_color = COLOR_PANEL_BORDER
+	style_panel.set_content_margin_all(15.0) # Padding: 15px за да не е притиснат текстът до ръба
+	
+	# Мека сянка, за да изглежда сякаш панелът "плува" над черния фон
+	style_panel.shadow_color = Color(0, 0, 0, 0.4)
+	style_panel.shadow_size = 12
+	style_panel.shadow_offset = Vector2(0, 6)
+	
+	t.set_stylebox("panel", "PanelContainer", style_panel)
+	t.set_stylebox("panel", "Panel", style_panel)
+
+## 2. Модерни капсуловидни бутони с анимация
+func _create_button_style(t: Theme) -> void:
+	var btn_normal = StyleBoxFlat.new()
+	btn_normal.bg_color = Color("#151f32")
+	btn_normal.set_corner_radius_all(10)
+	btn_normal.border_width_bottom = 2
+	btn_normal.border_color = COLOR_PANEL_BORDER
+	btn_normal.content_margin_left = 18
+	btn_normal.content_margin_right = 18
+	btn_normal.content_margin_top = 10
+	btn_normal.content_margin_bottom = 10
+	
+	# Hover състояние - светва в неоново зелено по контура
+	var btn_hover = btn_normal.duplicate() as StyleBoxFlat
+	btn_hover.bg_color = Color("#1e2e4a")
+	btn_hover.border_color = COLOR_ACCENT
+	
+	# Pressed състояние - леко потъмнява
+	var btn_pressed = btn_normal.duplicate() as StyleBoxFlat
+	btn_pressed.bg_color = Color("#0d1321")
+	btn_pressed.border_width_bottom = 0
+	
+	t.set_stylebox("normal", "Button", btn_normal)
+	t.set_stylebox("hover", "Button", btn_hover)
+	t.set_stylebox("pressed", "Button", btn_pressed)
+	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
+	
+	t.set_color("font_color", "Button", COLOR_TEXT_PRIMARY)
+	t.set_color("font_hover_color", "Button", Color.WHITE)
+
+## 3. Трансформация на сивите Checkboxes в модерни Toggle ключове
+func _create_checkbox_style(t: Theme) -> void:
+	var check_normal = StyleBoxFlat.new()
+	check_normal.bg_color = COLOR_MAIN_BG
+	check_normal.set_corner_radius_all(8)
+	check_normal.border_width_left = 1
+	check_normal.border_width_top = 1
+	check_normal.border_width_right = 1
+	check_normal.border_width_bottom = 1
+	check_normal.border_color = COLOR_PANEL_BORDER
+	
+	var check_checked = check_normal.duplicate() as StyleBoxFlat
+	check_checked.bg_color = COLOR_ACCENT
+	check_checked.border_color = COLOR_ACCENT
+	
+	t.set_stylebox("normal", "CheckBox", check_normal)
+	t.set_stylebox("pressed", "CheckBox", check_checked)
+	t.set_color("font_color", "CheckBox", COLOR_TEXT_PRIMARY)
+
+## 4. Скриване на грозните сиви разделители (Tabs) и замяната им с минималистични плочки
+func _create_tab_style(t: Theme) -> void:
+	var tab_selected = StyleBoxFlat.new()
+	tab_selected.bg_color = COLOR_PANEL_BG
+	tab_selected.set_corner_radius_all(10)
+	tab_selected.border_width_bottom = 3
+	tab_selected.border_color = COLOR_ACCENT # Светеща черта под активния таб
+	tab_selected.content_margin_left = 16
+	tab_selected.content_margin_right = 16
+	
+	var tab_unselected = StyleBoxFlat.new()
+	tab_unselected.bg_color = Color(0, 0, 0, 0) # Напълно прозрачен
+	tab_unselected.content_margin_left = 16
+	tab_unselected.content_margin_right = 16
+	
+	t.set_stylebox("tab_selected", "TabContainer", tab_selected)
+	t.set_stylebox("tab_unselected", "TabContainer", tab_unselected)
+
+func _setup_console_frosted_panel() -> void:
+	if console_panel != null:
+		var sb_console: StyleBoxFlat = StyleBoxFlat.new()
+		sb_console.bg_color = Color(0.05, 0.07, 0.13, 0.35) # Полупрозрачен фон за красив blur ефект
+		sb_console.set_corner_radius_all(14)
+		sb_console.set_border_width_all(1)
+		sb_console.border_color = COLOR_PANEL_BORDER
+		sb_console.shadow_color = Color(0, 0, 0, 0.4)
+		sb_console.shadow_size = 12
+		sb_console.shadow_offset = Vector2(0, 6)
+		sb_console.set_content_margin_all(15.0) # Padding: 15px
+		console_panel.add_theme_stylebox_override("panel", sb_console)
+
 func _apply_theme() -> void:
-	ThemeBuilderScript.apply_cyberpunk_theme(self)
+	var custom_theme: Theme = Theme.new()
+	
+	# Изграждаме модерните компоненти
+	_create_panel_style(custom_theme)
+	_create_button_style(custom_theme)
+	_create_checkbox_style(custom_theme)
+	_create_tab_style(custom_theme)
+	ThemeBuilderScript.apply_extended_styles(custom_theme)
+	
+	# Прилагаме темата глобално на целия прозорец
+	self.theme = custom_theme
+	
+	_setup_console_frosted_panel()
 	ThemeBuilderScript.style_action_buttons(btn_start_attack, btn_abort_attack, btn_emergency, btn_run_benchmark)
 	ThemeBuilderScript.style_preset_buttons([btn_preset_md5, btn_preset_ntlm, btn_preset_wpa2, btn_preset_bcrypt])
 	_update_active_sidebar_btn(btn_new_attack)
 	
 	if logo_label != null:
 		logo_label.text = "⚡ HASHCAT STUDIO PRO"
-		logo_label.add_theme_color_override("font_color", Color("#10B981"))
+		logo_label.add_theme_color_override("font_color", COLOR_ACCENT)
 	if sys_telemetry != null:
-		sys_telemetry.add_theme_color_override("font_color", Color("#94A3B8"))
+		sys_telemetry.add_theme_color_override("font_color", COLOR_TEXT_MUTED)
 
 	for opt in [opt_category, opt_attack_mode, opt_workload, opt_hash_type, opt_flag_category]:
 		if opt != null:
@@ -163,6 +286,7 @@ func _update_active_sidebar_btn(active_btn: Button) -> void:
 		btn_flags_guide, btn_settings, btn_fullscreen
 	]
 	ThemeBuilderScript.style_sidebar_buttons(sidebar_buttons, active_btn)
+
 
 func _connect_signals() -> void:
 	# Sidebar

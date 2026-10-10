@@ -3,6 +3,13 @@
 [ext_resource type="Script" uid="uid://drhkiqj06nnt5" path="res://scripts/ui/main_wizard_ui.gd" id="1_main_wizard_ui"]
 [ext_resource type="Script" uid="uid://clnvvc10xolij" path="res://scripts/ui/gpu_rack.gd" id="2_gpu_rack"]
 [ext_resource type="Script" uid="uid://b5hq5h6tv7mh1" path="res://scripts/ui/performance_graph.gd" id="3_perf_graph"]
+[ext_resource type="Shader" path="res://console_glass_blur.gdshader" id="4_blur_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_blur"]
+shader = ExtResource("4_blur_shader")
+shader_parameter/blur_amount = 2.5
+shader_parameter/tint_color = Color(0.05, 0.07, 0.13, 0.78)
+
 
 [node name="MainUI" type="Control" unique_id=143336154]
 layout_mode = 3
@@ -444,6 +451,14 @@ custom_minimum_size = Vector2(250, 150)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+
+[node name="ConsoleBackBuffer" type="BackBufferCopy" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/ConsolePanel" unique_id=1020304050]
+copy_mode = 2
+
+[node name="ConsoleBlur" type="ColorRect" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/ConsolePanel" unique_id=1020304051]
+material = SubResource("ShaderMaterial_blur")
+layout_mode = 2
+mouse_filter = 2
 
 [node name="ConsoleVBox" type="VBoxContainer" parent="MainLayout/WorkspaceSplit/BottomConsoleSplit/ConsolePanel" unique_id=423209992]
 layout_mode = 2
