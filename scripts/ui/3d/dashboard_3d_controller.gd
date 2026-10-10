@@ -1,168 +1,140 @@
 class_name Dashboard3DController
 extends Node3D
 
-## Master controller for the 3D Cyberpunk Operations Deck.
-## Orchestrates 3D components, dynamic hardware detection, HUD overlay,
-## live telemetry feeds, and bi-directional hardware toggling (HUD + 3D Rack).
+## Master controller for the 3D Cyberpunk Operations Arena.
+## Zero 2D screen overlays: Orchestrates 3D components, WASD camera,
+## and bidirectional sync between ServerRack3D and the in-world HoloTerminal3D.
 
 signal request_exit_3d()
 signal devices_selection_changed(active_ids: Array[int], cli_device_flag: String)
 
-const HoloCore3DScript = preload("res://scripts/ui/3d/holo_core_3d.gd")
-
 @onready var camera: DashboardCamera3D = $Camera3D
 @onready var server_rack: ServerRack3D = $ServerRack3D
-@onready var hashrate_vis: HashrateVisualizer3D = $HashrateVisualizer3D
 @onready var holo_core: Node3D = $HoloCore3D
+@onready var holo_terminal: Node3D = $HoloTerminal3D
+@onready var hashrate_vis: HashrateVisualizer3D = $HashrateVisualizer3D
 
-# Bottom Navigation HUD
-@onready var btn_view_front: Button = $HUD/Margin/HBox/BtnViewFront
-@onready var btn_view_rack: Button = $HUD/Margin/HBox/BtnViewRack
-@onready var btn_view_wave: Button = $HUD/Margin/HBox/BtnViewWave
-@onready var btn_view_wide: Button = $HUD/Margin/HBox/BtnViewWide
-@onready var btn_return_2d: Button = $HUD/Margin/HBox/BtnReturn2D
-@onready var label_status: Label = $HUD/Margin/HBox/LabelStatus
+const HashcatBridgeScript = preload("res://scripts/bridge/hashcat_bridge.gd")
 
-# Top Hardware Control HUD
-@onready var btn_mode_cpu: Button = $HUD/TopMargin/Panel/HBox/BtnModeCPU
-@onready var btn_mode_gpu: Button = $HUD/TopMargin/Panel/HBox/BtnModeGPU
-@onready var btn_mode_all: Button = $HUD/TopMargin/Panel/HBox/BtnModeALL
-@onready var device_buttons_container: HBoxContainer = $HUD/TopMargin/Panel/HBox/DeviceButtonsContainer
-@onready var label_cli_preview: Label = $HUD/TopMargin/Panel/HBox/LabelCliPreview
-
-var _device_buttons: Dictionary = {} # dev_id -> Button
+var _bridge: Node = null
 var _ambient_sim_timer: float = 0.0
 
 func _ready() -> void:
-	_connect_hud_signals()
-	_build_hardware_toggles()
-	_sync_hardware_ui_state()
+	_setup_engine_bridge()
+	_connect_subsystem_signals()
 
-func _connect_hud_signals() -> void:
-	if btn_view_front:
-		btn_view_front.pressed.connect(func(): camera.switch_preset(DashboardCamera3D.ViewPreset.OPERATOR_FRONT))
-	if btn_view_rack:
-		btn_view_rack.pressed.connect(func(): camera.switch_preset(DashboardCamera3D.ViewPreset.RACK_TELEMETRY))
-	if btn_view_wave:
-		btn_view_wave.pressed.connect(func(): camera.switch_preset(DashboardCamera3D.ViewPreset.HASHRATE_WAVE))
-	if btn_view_wide:
-		btn_view_wide.pressed.connect(func(): camera.switch_preset(DashboardCamera3D.ViewPreset.WIDE_OVERVIEW))
-	if btn_return_2d:
-		btn_return_2d.pressed.connect(func():
+func _setup_engine_bridge() -> void:
+	_bridge = HashcatBridgeScript.new()
+	add_child(_bridge)
+
+	_bridge.stdout_line_received.connect(func(line: String):
+		if holo_terminal:
+			holo_terminal.append_console_line(line)
+	)
+	_bridge.stderr_line_received.connect(func(line: String):
+		if holo_terminal:
+			holo_terminal.append_console_line("[color=#ef4444]" + line + "[/color]")
+	)
+	_bridge.status_updated.connect(func(status_data: Dictionary):
+		if holo_terminal:
+			var speed = status_data.get("speed", "0 H/s")
+			var progress = status_data.get("progress", "0%")
+			var status_str = status_data.get("status", "ACTIVE")
+			holo_terminal.update_engine_telemetry(speed, progress, status_str)
+	)
+	_bridge.hashrate_sample_received.connect(func(speed_val: float, _unit: String, raw_str: String):
+		update_telemetry_sample(speed_val)
+		if holo_terminal:
+			holo_terminal.update_engine_telemetry(raw_str, "", "ACTIVE")
+	)
+	_bridge.password_cracked.connect(func(hash_val: String, plain_val: String):
+		if holo_terminal:
+			holo_terminal.add_cracked_password(hash_val, plain_val)
+	)
+	_bridge.process_finished.connect(func(exit_code: int):
+		if holo_terminal:
+			holo_terminal.append_console_line("[color=#38bdf8][*] Process finished (code %d).[/color]" % exit_code)
+			holo_terminal.set_engine_running(false)
+	)
+	_bridge.emergency_stopped.connect(func():
+		if holo_terminal:
+			holo_terminal.append_console_line("[color=#ef4444][!] Emergency stop complete.[/color]")
+			holo_terminal.set_engine_running(false)
+	)
+
+func _connect_subsystem_signals() -> void:
+	if camera:
+		camera.request_exit_3d.connect(func():
+			if _bridge and _bridge.is_running():
+				_bridge.stop_attack_emergency()
 			request_exit_3d.emit()
 			get_tree().change_scene_to_file("res://scenes/main_wizard.tscn")
 		)
 
-	if btn_mode_cpu:
-		btn_mode_cpu.pressed.connect(func(): set_compute_mode("CPU"))
-	if btn_mode_gpu:
-		btn_mode_gpu.pressed.connect(func(): set_compute_mode("GPU"))
-	if btn_mode_all:
-		btn_mode_all.pressed.connect(func(): set_compute_mode("ALL"))
+	if holo_terminal:
+		holo_terminal.request_exit_2d.connect(func():
+			if _bridge and _bridge.is_running():
+				_bridge.stop_attack_emergency()
+			request_exit_3d.emit()
+			get_tree().change_scene_to_file("res://scenes/main_wizard.tscn")
+		)
+
+		holo_terminal.device_toggled.connect(func(dev_id: int, enabled: bool):
+			if server_rack:
+				server_rack.set_device_enabled(dev_id, enabled)
+			_emit_selection_update()
+		)
+
+		holo_terminal.compute_mode_selected.connect(func(mode: String):
+			if server_rack:
+				var detected = HardwareInspector.probe_compute_devices()
+				for dev in detected:
+					var dev_id: int = dev.get("id", 1)
+					var is_cpu: bool = (dev.get("type", "") == "CPU")
+					var en: bool = false
+					if mode == "CPU":
+						en = is_cpu
+					elif mode == "GPU":
+						en = not is_cpu
+					elif mode == "ALL":
+						en = true
+					server_rack.set_device_enabled(dev_id, en)
+			_emit_selection_update()
+		)
+
+		holo_terminal.attack_requested.connect(func(args: Array):
+			if _bridge:
+				_bridge.start_attack(args)
+		)
+
+		holo_terminal.benchmark_requested.connect(func():
+			if _bridge:
+				var dev_flag = HardwareInspector.get_cli_device_flag()
+				var b_args: Array = ["-b"]
+				if not dev_flag.is_empty():
+					for p in dev_flag.split(" "):
+						if not p.strip_edges().is_empty():
+							b_args.append(p.strip_edges())
+				_bridge.start_attack(b_args)
+		)
+
+		holo_terminal.stop_requested.connect(func():
+			if _bridge:
+				_bridge.stop_attack_emergency()
+		)
 
 	if server_rack:
-		server_rack.device_toggled.connect(func(dev_id: int, _enabled: bool):
-			_sync_hardware_ui_state()
+		server_rack.device_toggled.connect(func(dev_id: int, enabled: bool):
+			if holo_terminal:
+				holo_terminal.sync_device_state(dev_id, enabled)
+			_emit_selection_update()
 		)
 
-func _build_hardware_toggles() -> void:
-	if not device_buttons_container:
-		return
+	_emit_selection_update()
 
-	for child in device_buttons_container.get_children():
-		child.queue_free()
-	_device_buttons.clear()
-
-	var detected_devices = HardwareInspector.probe_compute_devices()
-	for dev in detected_devices:
-		var dev_id: int = dev.get("id", 1)
-		var dev_type: String = dev.get("type", "GPU")
-		var is_cpu: bool = (dev_type == "CPU")
-		var is_en: bool = dev.get("enabled", is_cpu)
-
-		var btn: Button = Button.new()
-		btn.custom_minimum_size = Vector2(88, 30)
-		_style_device_button(btn, dev_id, is_cpu, is_en)
-
-		btn.pressed.connect(func():
-			if server_rack:
-				var new_state: bool = server_rack.toggle_device(dev_id)
-				_style_device_button(btn, dev_id, is_cpu, new_state)
-				_sync_hardware_ui_state()
-		)
-
-		device_buttons_container.add_child(btn)
-		_device_buttons[dev_id] = btn
-
-func _style_device_button(btn: Button, dev_id: int, is_cpu: bool, enabled: bool) -> void:
-	var icon = "🖥️ CPU" if is_cpu else "⚡ GPU"
-	btn.text = "%s #%d: %s" % [icon, dev_id, "ВКЛ" if enabled else "ИЗКЛ"]
-
-	var sb: StyleBoxFlat = StyleBoxFlat.new()
-	sb.set_corner_radius_all(6)
-	sb.border_width_left = 1
-	sb.border_width_top = 1
-	sb.border_width_right = 1
-	sb.border_width_bottom = 2
-	sb.content_margin_left = 8
-	sb.content_margin_right = 8
-	sb.content_margin_top = 3
-	sb.content_margin_bottom = 3
-
-	if enabled:
-		sb.bg_color = Color("#0b2938") if not is_cpu else Color("#0f2a24")
-		sb.border_color = Color("#00f0ff") if not is_cpu else Color("#10b981")
-		btn.add_theme_color_override("font_color", Color("#00f0ff") if not is_cpu else Color("#10b981"))
-	else:
-		sb.bg_color = Color("#111827")
-		sb.border_color = Color("#374151")
-		btn.add_theme_color_override("font_color", Color("#6b7280"))
-
-	btn.add_theme_stylebox_override("normal", sb)
-
-func set_compute_mode(mode: String) -> void:
-	var detected_devices = HardwareInspector.probe_compute_devices()
-	for dev in detected_devices:
-		var dev_id: int = dev.get("id", 1)
-		var is_cpu: bool = (dev.get("type", "") == "CPU")
-		var activate: bool = false
-		if mode == "CPU":
-			activate = is_cpu
-		elif mode == "GPU":
-			activate = not is_cpu
-		elif mode == "ALL":
-			activate = true
-
-		if server_rack:
-			server_rack.set_device_enabled(dev_id, activate)
-		HardwareInspector.set_device_enabled(dev_id, activate)
-
-	_sync_hardware_ui_state()
-
-func _sync_hardware_ui_state() -> void:
-	var detected_devices = HardwareInspector.probe_compute_devices()
-	var active_ids: Array[int] = []
-
-	for dev in detected_devices:
-		var dev_id: int = dev.get("id", 1)
-		var is_cpu: bool = (dev.get("type", "") == "CPU")
-		var is_en: bool = dev.get("enabled", false)
-		if is_en:
-			active_ids.append(dev_id)
-
-		if _device_buttons.has(dev_id):
-			_style_device_button(_device_buttons[dev_id], dev_id, is_cpu, is_en)
-
-	active_ids.sort()
-	var cli_flag: String = HardwareInspector.get_cli_device_flag()
-
-	if label_cli_preview:
-		label_cli_preview.text = "CLI: " + (cli_flag if not cli_flag.is_empty() else "Няма избрани (-d none)")
-		label_cli_preview.add_theme_color_override("font_color", Color("#00f0ff") if not active_ids.is_empty() else Color("#ef4444"))
-
-	if label_status:
-		label_status.text = "🪐 3D OPS DECK // %d/%d АКТИВНИ ВЪЗЕЛА" % [active_ids.size(), detected_devices.size()]
-
+func _emit_selection_update() -> void:
+	var active_ids = HardwareInspector.get_active_device_ids()
+	var cli_flag = HardwareInspector.get_cli_device_flag()
 	devices_selection_changed.emit(active_ids, cli_flag)
 
 func update_telemetry_sample(rate_mhs: float, temp_celsius: float = 48.0, fan_pct: float = 40.0) -> void:
@@ -175,7 +147,7 @@ func update_telemetry_sample(rate_mhs: float, temp_celsius: float = 48.0, fan_pc
 
 func _process(delta: float) -> void:
 	_ambient_sim_timer += delta
-	if _ambient_sim_timer < 0.8:
+	if _ambient_sim_timer < 0.75:
 		return
 	_ambient_sim_timer = 0.0
 
@@ -190,14 +162,22 @@ func _process(delta: float) -> void:
 			else:
 				active_gpus += 1
 
-	var simulated_jitter = sin(Time.get_ticks_msec() * 0.002) * 6.0
+	if _bridge and _bridge.is_running():
+		return # Active attack running - live metrics streamed via HashcatBridge
+
+	var simulated_jitter = sin(Time.get_ticks_msec() * 0.002) * 8.0
 	var current_rate: float = 0.0
-	var status_text: String = "IDLE / STANDBY"
+	var status_text: String = "STANDBY"
 
 	if active_gpus > 0 or active_cpus > 0:
-		current_rate = float(active_gpus) * 115.0 + float(active_cpus) * 22.0 + simulated_jitter
+		current_rate = float(active_gpus) * 118.0 + float(active_cpus) * 24.0 + simulated_jitter
 		current_rate = max(current_rate, 12.0)
-		status_text = "HYBRID ACCEL" if (active_gpus > 0 and active_cpus > 0) else ("GPU COMPUTE" if active_gpus > 0 else "NUMA CPU")
+		if active_gpus > 0 and active_cpus > 0:
+			status_text = "HYBRID ACCEL"
+		elif active_gpus > 0:
+			status_text = "GPU CLUSTER"
+		else:
+			status_text = "NUMA CPU"
 
 	if hashrate_vis:
 		hashrate_vis.add_sample(current_rate)
@@ -208,12 +188,16 @@ func _process(delta: float) -> void:
 			var is_en: bool = dev.get("enabled", false)
 			var is_cpu: bool = (dev.get("type", "") == "CPU")
 			if is_en:
-				var dev_temp = (40.0 if is_cpu else 52.0) + simulated_jitter * 0.3
-				var dev_fan = 35.0 if is_cpu else 45.0 + simulated_jitter * 0.5
-				var dev_load = 30.0 if is_cpu else 65.0 + simulated_jitter
+				var dev_temp = (40.0 if is_cpu else 53.0) + simulated_jitter * 0.25
+				var dev_fan = 35.0 if is_cpu else 46.0 + simulated_jitter * 0.4
+				var dev_load = 32.0 if is_cpu else 68.0 + simulated_jitter
 				server_rack.update_device_telemetry(dev_id, dev_temp, dev_fan, dev_load)
+				if holo_terminal:
+					holo_terminal.update_device_metrics(dev_id, dev_temp, dev_fan, dev_load)
 			else:
 				server_rack.update_device_telemetry(dev_id, 32.0, 0.0, 0.0)
+				if holo_terminal:
+					holo_terminal.update_device_metrics(dev_id, 32.0, 0.0, 0.0)
 
 	if holo_core:
 		holo_core.set_core_telemetry(current_rate, status_text)

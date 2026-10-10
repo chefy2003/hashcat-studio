@@ -7,7 +7,6 @@ func _init() -> void:
 	_capture_views()
 
 func _capture_views() -> void:
-	# Wait for rendering pipeline and shaders to compile
 	for i in range(25):
 		await process_frame
 
@@ -15,22 +14,20 @@ func _capture_views() -> void:
 	var scene = win.get_child(win.get_child_count() - 1)
 	var cam = scene.find_child("Camera3D", true, false)
 	var vis = scene.find_child("HashrateVisualizer3D", true, false)
-	var rack = scene.find_child("ServerRack3D", true, false)
 
-	# Feed rich hashrate samples into 3D visualizer
-	for v in [18.0, 32.0, 55.0, 78.0, 120.0, 95.0, 142.0, 110.0, 130.0]:
+	for v in [25.0, 48.0, 75.0, 110.0, 160.0, 140.0, 195.0, 175.0, 220.0]:
 		vis.add_sample(v)
 		for f in range(2):
 			await process_frame
 
-	# 1. Capture Operator Front View
-	for i in range(10):
+	# 1. Capture Operator Front View (Distance x2, Clean 3D arena, No 2D HUD)
+	for i in range(12):
 		await process_frame
 	var img1 = win.get_texture().get_image()
 	img1.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_ops_deck.png")
 	print("Saved verify_3d_ops_deck.png")
 
-	# 2. Switch to 3D Server Rack view
+	# 2. Switch to 3D Server Rack view (Left)
 	cam.switch_preset(DashboardCamera3DScript.ViewPreset.RACK_TELEMETRY, 0.0)
 	for i in range(15):
 		await process_frame
@@ -38,15 +35,34 @@ func _capture_views() -> void:
 	img2.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_rack_telemetry.png")
 	print("Saved verify_3d_rack_telemetry.png")
 
-	# 3. Switch to 3D Hashrate Waveform view
-	cam.switch_preset(DashboardCamera3DScript.ViewPreset.HASHRATE_WAVE, 0.0)
+	# 3. Switch to 3D Holographic Terminal view (Right) - Tab 1: Hardware
+	cam.switch_preset(DashboardCamera3DScript.ViewPreset.HOLO_TERMINAL, 0.0)
 	for i in range(15):
 		await process_frame
 	var img3 = win.get_texture().get_image()
-	img3.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_hashrate_mesh.png")
-	print("Saved verify_3d_hashrate_mesh.png")
+	img3.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_holo_terminal.png")
+	print("Saved verify_3d_holo_terminal.png")
 
-	# 4. Switch to Wide Cockpit View
+	# 3b. Switch to Terminal Tab 2: Attack Config & Hash Detector
+	var term_node = scene.find_child("HoloTerminal3D", true, false)
+	if term_node:
+		term_node.set_active_tab(1)
+	for i in range(15):
+		await process_frame
+	var img3b = win.get_texture().get_image()
+	img3b.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_terminal_attack.png")
+	print("Saved verify_3d_terminal_attack.png")
+
+	# 3c. Switch to Terminal Tab 3: Console & Live Monitoring
+	if term_node:
+		term_node.set_active_tab(2)
+	for i in range(15):
+		await process_frame
+	var img3c = win.get_texture().get_image()
+	img3c.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_terminal_console.png")
+	print("Saved verify_3d_terminal_console.png")
+
+	# 4. Switch to Wide Panoramic Cockpit View
 	cam.switch_preset(DashboardCamera3DScript.ViewPreset.WIDE_OVERVIEW, 0.0)
 	for i in range(15):
 		await process_frame
