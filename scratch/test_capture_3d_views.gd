@@ -26,24 +26,26 @@ func _capture_views() -> void:
 		term_node.append_console_line("[color=#00f0ff]>>> GPU CLUSTERS 1-4 SATURATED AT 98%[/color]")
 		term_node.append_console_line("[color=#10b981][*] Pipeline throughput optimal.[/color]")
 
-	# 1. Capture Operator Front View (Distance x2, Clean 3D arena matching concept art)
+	# 1. Capture Operator Front View (Distance x2, Clean 3D arena, Wave completely separated)
 	for i in range(16):
 		await process_frame
 	var img1 = win.get_texture().get_image()
 	img1.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_ops_deck.png")
 	print("Saved verify_3d_ops_deck.png")
 
-	# 2. Switch to 3D Server Rack view (Left)
-	cam.switch_preset(DashboardCamera3DScript.ViewPreset.RACK_TELEMETRY, 0.0)
+	# 2. Capture Proximity Hover & Interaction Prompt [E] ВЛЕЗ В ТЕРМИНАЛА
+	cam.global_position = Vector3(4.0, 1.4, -0.45)
+	cam.rotation_degrees = Vector3(-4.0, -78.5, 0.0)
 	for i in range(15):
 		await process_frame
-	var img2 = win.get_texture().get_image()
-	img2.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_rack_telemetry.png")
-	print("Saved verify_3d_rack_telemetry.png")
+	var img_hover = win.get_texture().get_image()
+	img_hover.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_terminal_hover.png")
+	print("Saved verify_3d_terminal_hover.png")
 
-	# 3. Switch to 3D Holographic Terminal view (Right) - Tab 0: Attack Setup & Intensity
-	cam.switch_preset(DashboardCamera3DScript.ViewPreset.HOLO_TERMINAL, 0.0)
+	# 3. Enter First-Person Terminal Focus (~30% realistic zoom, centered, locked controls)
+	cam.enter_terminal_focus(0.0)
 	if term_node:
+		term_node.set_focused(true)
 		term_node.set_active_tab(0)
 	for i in range(15):
 		await process_frame
@@ -51,7 +53,16 @@ func _capture_views() -> void:
 	img3.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_holo_terminal.png")
 	print("Saved verify_3d_holo_terminal.png")
 
-	# 3b. Switch to Terminal Tab 1: Console & Execution
+	# 3b. Switch to Terminal Fullscreen Mode (Operator toggle)
+	cam.set_terminal_fullscreen(true, 0.0)
+	for i in range(15):
+		await process_frame
+	var img_full = win.get_texture().get_image()
+	img_full.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_terminal_fullscreen.png")
+	print("Saved verify_3d_terminal_fullscreen.png")
+
+	# 3c. Switch back to First-Person and open Tab 1: Console
+	cam.set_terminal_fullscreen(false, 0.0)
 	if term_node:
 		term_node.set_active_tab(1)
 	for i in range(15):
@@ -60,16 +71,10 @@ func _capture_views() -> void:
 	img3b.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_terminal_console.png")
 	print("Saved verify_3d_terminal_console.png")
 
-	# 3c. Switch to Terminal Tab 2: Flags Guide
+	# 4. Deactivate focus and Switch to Wide Panoramic Cockpit View
+	cam.exit_terminal_focus(0.0)
 	if term_node:
-		term_node.set_active_tab(2)
-	for i in range(15):
-		await process_frame
-	var img3c = win.get_texture().get_image()
-	img3c.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_terminal_attack.png")
-	print("Saved verify_3d_terminal_attack.png")
-
-	# 4. Switch to Wide Panoramic Cockpit View
+		term_node.set_focused(false)
 	cam.switch_preset(DashboardCamera3DScript.ViewPreset.WIDE_OVERVIEW, 0.0)
 	for i in range(15):
 		await process_frame

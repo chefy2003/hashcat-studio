@@ -10,6 +10,8 @@ extends Control
 signal device_toggled_in_terminal(dev_id: int, enabled: bool)
 signal compute_mode_selected(mode: String)
 signal request_exit_to_2d()
+signal request_deactivate_terminal()
+signal request_toggle_fullscreen(is_fullscreen: bool)
 signal attack_requested(args: Array)
 signal benchmark_requested()
 signal stop_requested()
@@ -118,15 +120,26 @@ func _build_ui() -> void:
 	header_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(header_spacer)
 
-	var btn_exit_2d = Button.new()
-	btn_exit_2d.text = "⬅ ВЪРНИ СЕ В 2D"
-	btn_exit_2d.custom_minimum_size = Vector2(150, 32)
-	_style_btn(btn_exit_2d, Color("#334155"), Color("#94a3b8"))
-	btn_exit_2d.pressed.connect(func():
-		request_exit_to_2d.emit()
-		get_tree().change_scene_to_file("res://scenes/main_wizard.tscn")
+	var btn_fullscreen = Button.new()
+	btn_fullscreen.text = "⛶ ЦЯЛ ЕКРАН"
+	btn_fullscreen.custom_minimum_size = Vector2(140, 32)
+	btn_fullscreen.toggle_mode = true
+	_style_btn(btn_fullscreen, Color("#0369a1"), Color("#38bdf8"))
+	btn_fullscreen.toggled.connect(func(is_toggled: bool):
+		btn_fullscreen.text = "⛶ 3D ИЗГЛЕД" if is_toggled else "⛶ ЦЯЛ ЕКРАН"
+		request_toggle_fullscreen.emit(is_toggled)
 	)
-	header.add_child(btn_exit_2d)
+	header.add_child(btn_fullscreen)
+
+	var btn_deactivate = Button.new()
+	btn_deactivate.text = "⏏ ДЕАКТИВИРАЙ (ESC)"
+	btn_deactivate.custom_minimum_size = Vector2(170, 32)
+	_style_btn(btn_deactivate, Color("#334155"), Color("#f8fafc"))
+	btn_deactivate.pressed.connect(func():
+		request_deactivate_terminal.emit()
+		request_exit_to_2d.emit()
+	)
+	header.add_child(btn_deactivate)
 
 	main_vbox.add_child(header)
 

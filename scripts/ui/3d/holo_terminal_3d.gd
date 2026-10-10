@@ -8,6 +8,9 @@ extends Node3D
 signal device_toggled(dev_id: int, enabled: bool)
 signal compute_mode_selected(mode: String)
 signal request_exit_2d()
+signal terminal_activated()
+signal request_deactivate_focus()
+signal request_toggle_fullscreen(is_fullscreen: bool)
 signal attack_requested(args: Array)
 signal benchmark_requested()
 signal stop_requested()
@@ -27,8 +30,44 @@ var _aux_status_lbl: Label
 var _aux_speed_lbl: Label
 var _aux_cracked_lbl: Label
 
+var is_player_in_range: bool = false
+var is_hovered: bool = false
+var is_focused: bool = false
+
+var _lbl_interaction_prompt: Label3D
+var _neon_mat: StandardMaterial3D
+var _interaction_zone: Area3D
+
 func _ready() -> void:
 	_build_terminal()
+
+func _process(_delta: float) -> void:
+	if (is_player_in_range or is_hovered) and not is_focused:
+		if _neon_mat:
+			var pulse = (sin(Time.get_ticks_msec() * 0.007) * 0.5 + 0.5) * 1.5 + 1.6
+			_neon_mat.emission_energy_multiplier = pulse
+	elif is_focused:
+		if _neon_mat:
+			_neon_mat.emission_energy_multiplier = 2.2
+	else:
+		if _neon_mat:
+			_neon_mat.emission_energy_multiplier = 1.6
+
+func set_focused(focused: bool) -> void:
+	is_focused = focused
+	if screen_body:
+		screen_body.set("is_interaction_enabled", focused)
+	_update_glow_and_prompt()
+
+func set_player_in_range(in_range: bool) -> void:
+	if is_player_in_range != in_range:
+		is_player_in_range = in_range
+		_update_glow_and_prompt()
+
+func _update_glow_and_prompt() -> void:
+	var should_show = (is_player_in_range or is_hovered) and not is_focused
+	if _lbl_interaction_prompt:
+		_lbl_interaction_prompt.visible = should_show
 
 func sync_device_state(dev_id: int, enabled: bool) -> void:
 	if terminal_ui:
@@ -91,8 +130,17 @@ func _build_terminal() -> void:
 		compute_mode_selected.emit(mode)
 	)
 	terminal_ui.request_exit_to_2d.connect(func():
+		request_deactivate_focus.emit()
 		request_exit_2d.emit()
 	)
+	if terminal_ui.has_signal("request_deactivate_terminal"):
+		terminal_ui.connect("request_deactivate_terminal", func():
+			request_deactivate_focus.emit()
+		)
+	if terminal_ui.has_signal("request_toggle_fullscreen"):
+		terminal_ui.connect("request_toggle_fullscreen", func(is_full: bool):
+			request_toggle_fullscreen.emit(is_full)
+		)
 	if terminal_ui.has_signal("attack_requested"):
 		terminal_ui.connect("attack_requested", func(args: Array):
 			attack_requested.emit(args)
@@ -129,6 +177,18 @@ func _build_terminal() -> void:
 	screen_body.set_script(Gui3DPanelScript)
 	screen_body.set("target_viewport", viewport)
 	screen_body.set("mesh_instance", screen_mesh)
+	screen_body.set("is_interaction_enabled", false)
+
+	if screen_body.has_signal("hover_state_changed"):
+		screen_body.connect("hover_state_changed", func(is_h: bool):
+			is_hovered = is_h
+			_update_glow_and_prompt()
+		)
+	if screen_body.has_signal("panel_clicked_in_free_mode"):
+		screen_body.connect("panel_clicked_in_free_mode", func():
+			if is_player_in_range or is_hovered:
+				terminal_activated.emit()
+		)
 
 	var shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
@@ -137,15 +197,44 @@ func _build_terminal() -> void:
 	screen_body.add_child(shape)
 	screen_mesh.add_child(screen_body)
 
-	# 5. Hologram Projector Base Puck, Light Cone, Particles & Auxiliary Screen
+	# 5. Floating Interaction Prompt Badge [E] ВЛЕЗ В ТЕРМИНАЛА
+	_lbl_interaction_prompt = Label3D.new()
+	_lbl_interaction_prompt.text = "[E] ВЛЕЗ В ТЕРМИНАЛА"
+	_lbl_interaction_prompt.font_size = 28
+	_lbl_interaction_prompt.modulate = Color("#00f0ff")
+	_lbl_interaction_prompt.outline_modulate = Color("#020617")
+	_lbl_interaction_prompt.outline_size = 6
+	_lbl_interaction_prompt.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_lbl_interaction_prompt.position = Vector3(0.0, 0.94, 0.05)
+	_lbl_interaction_prompt.visible = false
+	add_child(_lbl_interaction_prompt)
+
+	# 6. Interaction Zone (Area3D)
+	_interaction_zone = Area3D.new()
+	_interaction_zone.name = "InteractionZone"
+	var col_shape = CollisionShape3D.new()
+	var cyl_shape = CylinderShape3D.new()
+	cyl_shape.radius = 4.0
+	cyl_shape.height = 3.5
+	col_shape.shape = cyl_shape
+	col_shape.position = Vector3(0.0, 0.0, 0.5)
+	_interaction_zone.add_child(col_shape)
+	_interaction_zone.body_entered.connect(func(_b): set_player_in_range(true))
+	_interaction_zone.body_exited.connect(func(_b): set_player_in_range(false))
+	_interaction_zone.area_entered.connect(func(_a): set_player_in_range(true))
+	_interaction_zone.area_exited.connect(func(_a): set_player_in_range(false))
+	add_child(_interaction_zone)
+
+	# 7. Hologram Projector Base Puck, Light Cone, Particles & Auxiliary Screen
 	_build_hologram_projector_and_frame()
 
 func _build_hologram_projector_and_frame() -> void:
-	var neon_mat = StandardMaterial3D.new()
-	neon_mat.albedo_color = Color("#00f0ff")
-	neon_mat.emission_enabled = true
-	neon_mat.emission = Color("#00f0ff")
-	neon_mat.emission_energy_multiplier = 1.6
+	_neon_mat = StandardMaterial3D.new()
+	_neon_mat.albedo_color = Color("#00f0ff")
+	_neon_mat.emission_enabled = true
+	_neon_mat.emission = Color("#00f0ff")
+	_neon_mat.emission_energy_multiplier = 1.6
+	var neon_mat = _neon_mat
 
 	var dark_metal_mat = StandardMaterial3D.new()
 	dark_metal_mat.albedo_color = Color("#0c1524")

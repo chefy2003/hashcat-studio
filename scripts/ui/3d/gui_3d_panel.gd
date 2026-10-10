@@ -5,8 +5,12 @@ extends StaticBody3D
 ## Projects camera 3D raycast collision points to 2D SubViewport UV coordinates
 ## and forwards mouse clicks, motion, and scrolling into the 2D Control tree.
 
+signal hover_state_changed(is_hovered: bool)
+signal panel_clicked_in_free_mode()
+
 @export var target_viewport: SubViewport
 @export var mesh_instance: MeshInstance3D
+@export var is_interaction_enabled: bool = false
 
 var is_mouse_inside: bool = false
 var last_mouse_pos_2d: Vector2 = Vector2.ZERO
@@ -43,6 +47,17 @@ func _input_event(_camera: Camera3D, event: InputEvent, event_position: Vector3,
 	if uv.x < 0.0 or uv.x > 1.0 or uv.y < 0.0 or uv.y > 1.0:
 		return
 
+	if not is_mouse_inside:
+		is_mouse_inside = true
+		hover_state_changed.emit(true)
+
+	# When interaction is disabled (Free-Flight mode), do NOT push clicks to the UI!
+	if not is_interaction_enabled:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			panel_clicked_in_free_mode.emit()
+		return
+
+	# When interaction is enabled (Terminal Focus mode), forward all mouse events
 	var viewport_pos = uv * Vector2(target_viewport.size)
 	var forwarded_event = event.duplicate()
 
@@ -55,11 +70,13 @@ func _input_event(_camera: Camera3D, event: InputEvent, event_position: Vector3,
 			last_mouse_pos_2d = viewport_pos
 
 		target_viewport.push_input(forwarded_event)
-		is_mouse_inside = true
 
 func _on_mouse_exited() -> void:
-	if is_mouse_inside and target_viewport:
-		var exit_event = InputEventMouseMotion.new()
-		exit_event.position = Vector2(-1000, -1000)
-		target_viewport.push_input(exit_event)
+	if is_mouse_inside:
 		is_mouse_inside = false
+		hover_state_changed.emit(false)
+		if target_viewport and is_interaction_enabled:
+			var exit_event = InputEventMouseMotion.new()
+			exit_event.position = Vector2(-1000, -1000)
+			target_viewport.push_input(exit_event)
+

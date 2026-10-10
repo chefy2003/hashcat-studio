@@ -72,12 +72,30 @@ func _connect_subsystem_signals() -> void:
 		)
 
 	if holo_terminal:
-		holo_terminal.request_exit_2d.connect(func():
-			if _bridge and _bridge.is_running():
-				_bridge.stop_attack_emergency()
-			request_exit_3d.emit()
-			get_tree().change_scene_to_file("res://scenes/main_wizard.tscn")
-		)
+		if holo_terminal.has_signal("terminal_activated"):
+			holo_terminal.connect("terminal_activated", func():
+				if camera:
+					camera.enter_terminal_focus()
+				holo_terminal.set_focused(true)
+			)
+
+		if holo_terminal.has_signal("request_deactivate_focus"):
+			holo_terminal.connect("request_deactivate_focus", func():
+				if camera:
+					camera.exit_terminal_focus()
+				holo_terminal.set_focused(false)
+			)
+
+		if holo_terminal.has_signal("request_toggle_fullscreen"):
+			holo_terminal.connect("request_toggle_fullscreen", func(is_full: bool):
+				if camera:
+					camera.set_terminal_fullscreen(is_full)
+			)
+
+		if camera and camera.has_signal("terminal_focus_changed"):
+			camera.terminal_focus_changed.connect(func(is_focused: bool):
+				holo_terminal.set_focused(is_focused)
+			)
 
 		holo_terminal.device_toggled.connect(func(dev_id: int, enabled: bool):
 			if server_rack:
@@ -146,6 +164,10 @@ func update_telemetry_sample(rate_mhs: float, temp_celsius: float = 48.0, fan_pc
 		holo_core.set_core_telemetry(rate_mhs, "ACTIVE")
 
 func _process(delta: float) -> void:
+	if camera and holo_terminal:
+		var dist = camera.global_position.distance_to(holo_terminal.global_position)
+		holo_terminal.set_player_in_range(dist < 5.2)
+
 	_ambient_sim_timer += delta
 	if _ambient_sim_timer < 0.75:
 		return
@@ -201,3 +223,23 @@ func _process(delta: float) -> void:
 
 	if holo_core:
 		holo_core.set_core_telemetry(current_rate, status_text)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_E:
+			if camera and holo_terminal:
+				if camera.camera_mode == DashboardCamera3D.CameraMode.FREE_FLIGHT:
+					if holo_terminal.is_player_in_range or holo_terminal.is_hovered:
+						camera.enter_terminal_focus()
+						holo_terminal.set_focused(true)
+						get_viewport().set_input_as_handled()
+				elif camera.camera_mode == DashboardCamera3D.CameraMode.TERMINAL_FOCUS:
+					camera.exit_terminal_focus()
+					holo_terminal.set_focused(false)
+					get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_ESCAPE:
+			if camera and camera.camera_mode == DashboardCamera3D.CameraMode.TERMINAL_FOCUS:
+				camera.exit_terminal_focus()
+				if holo_terminal:
+					holo_terminal.set_focused(false)
+				get_viewport().set_input_as_handled()
