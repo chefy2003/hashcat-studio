@@ -162,7 +162,7 @@ func _create_panel_style(t: Theme) -> void:
 	style_panel.border_width_right = 1
 	style_panel.border_width_bottom = 1
 	style_panel.border_color = COLOR_PANEL_BORDER
-	style_panel.set_content_margin_all(15.0) # Padding: 15px за да не е притиснат текстът до ръба
+	style_panel.set_content_margin_all(20.0) # Padding: 20px за да не е притиснат текстът до ръба
 	
 	# Мека сянка, за да изглежда сякаш панелът "плува" над черния фон
 	style_panel.shadow_color = Color(0, 0, 0, 0.4)

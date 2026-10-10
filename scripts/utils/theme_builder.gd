@@ -71,7 +71,7 @@ static func _apply_panel_styles(t: Theme) -> void:
 	style_panel.shadow_color = Color(0, 0, 0, 0.4)
 	style_panel.shadow_size = 12
 	style_panel.shadow_offset = Vector2(0, 6)
-	style_panel.set_content_margin_all(15.0)
+	style_panel.set_content_margin_all(20.0)
 
 	t.set_stylebox("panel", "Panel", style_panel)
 	t.set_stylebox("panel", "PanelContainer", style_panel)

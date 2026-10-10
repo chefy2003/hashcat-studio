@@ -2,138 +2,200 @@
 
 [ext_resource type="Script" path="res://scripts/ui/wizard_animator.gd" id="1_r2da7"]
 
-[node name="WizardStepper" type="PanelContainer" unique_id=1091352529]
-custom_minimum_size = Vector2(800, 500)
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tl67g"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_74ugt"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.050980393, 0.07450981, 0.12941177, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.11764706, 0.16078432, 0.23137255, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_83fs0"]
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+bg_color = Color(0.050980393, 0.07450981, 0.12941177, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.11764706, 0.16078432, 0.23137255, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 12
+shadow_offset = Vector2(0, 6)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_klanm"]
+
+[node name="WizardStepper" type="MarginContainer" unique_id=267836629]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
 
-[node name="MainVBox" type="VBoxContainer" parent="." unique_id=1302490533]
+[node name="MainVBox" type="VBoxContainer" parent="." unique_id=1197411137]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 16
 
-[node name="HeaderPanel" type="PanelContainer" parent="MainVBox" unique_id=887950594]
-custom_minimum_size = Vector2(0, 50)
+[node name="HeaderPanel" type="PanelContainer" parent="MainVBox" unique_id=778612159]
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_tl67g")
 
-[node name="StepperHeader" type="HBoxContainer" parent="MainVBox/HeaderPanel" unique_id=2140904360]
+[node name="StepperHeader" type="HBoxContainer" parent="MainVBox/HeaderPanel" unique_id=2145456932]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="StepIndicator1" type="PanelContainer" parent="MainVBox/HeaderPanel/StepperHeader" unique_id=1205501996]
+[node name="StepIndicator1" type="PanelContainer" parent="MainVBox/HeaderPanel/StepperHeader" unique_id=1274812857]
 custom_minimum_size = Vector2(180, 36)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_74ugt")
 
-[node name="Label" type="Label" parent="MainVBox/HeaderPanel/StepperHeader/StepIndicator1" unique_id=306679920]
+[node name="Label" type="Label" parent="MainVBox/HeaderPanel/StepperHeader/StepIndicator1" unique_id=832450294]
 layout_mode = 2
 text = "1. Цели & Хешове"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="StepIndicator2" type="PanelContainer" parent="MainVBox/HeaderPanel/StepperHeader" unique_id=1861857977]
+[node name="StepIndicator2" type="PanelContainer" parent="MainVBox/HeaderPanel/StepperHeader" unique_id=1272657568]
 custom_minimum_size = Vector2(180, 36)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_74ugt")
 
-[node name="Label" type="Label" parent="MainVBox/HeaderPanel/StepperHeader/StepIndicator2" unique_id=908312723]
+[node name="Label" type="Label" parent="MainVBox/HeaderPanel/StepperHeader/StepIndicator2" unique_id=1127469140]
 layout_mode = 2
 text = "2. Топология & Режими"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="StepIndicator3" type="PanelContainer" parent="MainVBox/HeaderPanel/StepperHeader" unique_id=1463182072]
+[node name="StepIndicator3" type="PanelContainer" parent="MainVBox/HeaderPanel/StepperHeader" unique_id=385242183]
 custom_minimum_size = Vector2(180, 36)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_74ugt")
 
-[node name="Label" type="Label" parent="MainVBox/HeaderPanel/StepperHeader/StepIndicator3" unique_id=370026038]
+[node name="Label" type="Label" parent="MainVBox/HeaderPanel/StepperHeader/StepIndicator3" unique_id=976004718]
 layout_mode = 2
 text = "3. Финализиране & Старт"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ClipViewport" type="Control" parent="MainVBox" unique_id=1222813200]
+[node name="ClipViewport" type="Control" parent="MainVBox" unique_id=915631065]
 clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="WizardAnimator" type="Control" parent="MainVBox/ClipViewport" unique_id=249803134]
+[node name="WizardAnimator" type="Control" parent="MainVBox/ClipViewport" unique_id=1707309639]
 anchors_preset = 0
 script = ExtResource("1_r2da7")
 
-[node name="Step1" type="PanelContainer" parent="MainVBox/ClipViewport/WizardAnimator" unique_id=535905609]
+[node name="Step1" type="PanelContainer" parent="MainVBox/ClipViewport/WizardAnimator" unique_id=1392646470]
 custom_minimum_size = Vector2(800, 380)
 layout_mode = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_83fs0")
 
-[node name="@VBoxContainer@2" type="VBoxContainer" parent="MainVBox/ClipViewport/WizardAnimator/Step1" unique_id=1716872812]
+[node name="VBox" type="VBoxContainer" parent="MainVBox/ClipViewport/WizardAnimator/Step1" unique_id=1598847848]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 12
 
-[node name="@Label@3" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step1/@VBoxContainer@2" unique_id=1425819363]
+[node name="Title" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step1/VBox" unique_id=2046105278]
 layout_mode = 2
 text = "СТЪПКА 1: 1. Цели & Хешове"
 horizontal_alignment = 1
 
-[node name="@Label@4" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step1/@VBoxContainer@2" unique_id=602599168]
+[node name="Desc" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step1/VBox" unique_id=2117741758]
 layout_mode = 2
-text = "Конфигурационен панел за стъпка 1 от Hashcat Intelligence Studio."
+text = "Заредете хешове (MD5, NTLM, WPA2, Bcrypt) и изберете целеви речници."
 horizontal_alignment = 1
 
-[node name="Step2" type="PanelContainer" parent="MainVBox/ClipViewport/WizardAnimator" unique_id=278073405]
+[node name="Step2" type="PanelContainer" parent="MainVBox/ClipViewport/WizardAnimator" unique_id=1055517066]
 custom_minimum_size = Vector2(800, 380)
 layout_mode = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_83fs0")
 
-[node name="@VBoxContainer@5" type="VBoxContainer" parent="MainVBox/ClipViewport/WizardAnimator/Step2" unique_id=2145103642]
+[node name="VBox" type="VBoxContainer" parent="MainVBox/ClipViewport/WizardAnimator/Step2" unique_id=1384514051]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 12
 
-[node name="@Label@6" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step2/@VBoxContainer@5" unique_id=887639564]
+[node name="Title" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step2/VBox" unique_id=386222727]
 layout_mode = 2
 text = "СТЪПКА 2: 2. Топология & Режими"
 horizontal_alignment = 1
 
-[node name="@Label@7" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step2/@VBoxContainer@5" unique_id=1736889636]
+[node name="Desc" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step2/VBox" unique_id=904523439]
 layout_mode = 2
-text = "Конфигурационен панел за стъпка 2 от Hashcat Intelligence Studio."
+text = "Изберете режим на атака (-a 0, 1, 3), профил на натоварване (-w) и хардуерни карти."
 horizontal_alignment = 1
 
-[node name="Step3" type="PanelContainer" parent="MainVBox/ClipViewport/WizardAnimator" unique_id=1050172734]
+[node name="Step3" type="PanelContainer" parent="MainVBox/ClipViewport/WizardAnimator" unique_id=2130241688]
 custom_minimum_size = Vector2(800, 380)
 layout_mode = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_83fs0")
 
-[node name="@VBoxContainer@8" type="VBoxContainer" parent="MainVBox/ClipViewport/WizardAnimator/Step3" unique_id=632142745]
+[node name="VBox" type="VBoxContainer" parent="MainVBox/ClipViewport/WizardAnimator/Step3" unique_id=1337533372]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 12
 
-[node name="@Label@9" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step3/@VBoxContainer@8" unique_id=100323230]
+[node name="Title" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step3/VBox" unique_id=2061670906]
 layout_mode = 2
 text = "СТЪПКА 3: 3. Финализиране & Старт"
 horizontal_alignment = 1
 
-[node name="@Label@10" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step3/@VBoxContainer@8" unique_id=1616530380]
+[node name="Desc" type="Label" parent="MainVBox/ClipViewport/WizardAnimator/Step3/VBox" unique_id=1252342589]
 layout_mode = 2
-text = "Конфигурационен панел за стъпка 3 от Hashcat Intelligence Studio."
+text = "Прегледайте готовата Hashcat CLI команда и стартирайте изчисленията."
 horizontal_alignment = 1
 
-[node name="NavBar" type="HBoxContainer" parent="MainVBox" unique_id=1091140684]
-custom_minimum_size = Vector2(0, 48)
+[node name="FooterBar" type="PanelContainer" parent="MainVBox" unique_id=676910035]
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_klanm")
+
+[node name="NavBar" type="HBoxContainer" parent="MainVBox/FooterBar" unique_id=1322695666]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 16
 
-[node name="BtnBack" type="Button" parent="MainVBox/NavBar" unique_id=770155385]
+[node name="BtnBack" type="Button" parent="MainVBox/FooterBar/NavBar" unique_id=354959448]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(140, 40)
+custom_minimum_size = Vector2(140, 42)
 layout_mode = 2
+size_flags_vertical = 4
 text = "⬅ Назад"
 
-[node name="Spacer" type="Control" parent="MainVBox/NavBar" unique_id=804532845]
+[node name="Spacer" type="Control" parent="MainVBox/FooterBar/NavBar" unique_id=721035438]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="BtnNext" type="Button" parent="MainVBox/NavBar" unique_id=1218288836]
+[node name="BtnNext" type="Button" parent="MainVBox/FooterBar/NavBar" unique_id=2131824531]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(200, 42)
 layout_mode = 2
+size_flags_vertical = 4
 text = "Напред ➡"
