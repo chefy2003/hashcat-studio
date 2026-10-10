@@ -66,9 +66,9 @@ light_energy = 0.95
 omni_range = 5.5
 
 [node name="WaveFillLight" type="OmniLight3D" parent="." unique_id=581920194]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.4, -4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.8, 1.4, -1.2)
 light_color = Color(0.06, 0.73, 0.51, 1)
-light_energy = 0.9
+light_energy = 0.85
 omni_range = 5.0
 
 [node name="FloorGrid" type="MeshInstance3D" parent="." unique_id=983412765]
@@ -92,5 +92,6 @@ transform = Transform3D(0.15126, 0, -0.98849, 0, 1, 0, 0.98849, 0, 0.15126, 6.5,
 script = ExtResource("8_term08")
 
 [node name="HashrateVisualizer3D" type="Node3D" parent="." unique_id=839102847]
-transform = Transform3D(0.75617, 0, -0.65438, 0, 1, 0, 0.65438, 0, 0.75617, 4.5, 0.2, -5.2)
+transform = Transform3D(0.15126, 0, -0.98849, 0, 1, 0, 0.98849, 0, 0.15126, 7.05, 0.0, -1.12)
 script = ExtResource("6_vis06")
+

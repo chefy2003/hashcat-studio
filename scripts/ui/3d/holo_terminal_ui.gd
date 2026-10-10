@@ -2,9 +2,10 @@ class_name HoloTerminalUI
 extends Control
 
 ## Spatial Holographic Terminal GUI.
-## Hosts the complete Hashcat intelligence suite (Hardware Topology, Attack Config,
-## Hash Detector, Live Console, Cracked Passwords, and Flags Guide)
-## inside a 3D in-world SubViewport with full interactive mouse raycast support.
+## Faithful implementation of the Holographic Operations Dashboard concept art:
+## 3 clean tabs (Attack Setup, Console & Execution, Flags Guide),
+## Translucent glassmorphism, Hexagonal Intensity presets ([LOW], [MID], [HIGH]),
+## Circular arc telemetry gauges, Automated Hash Detector, and Live Engine Streaming.
 
 signal device_toggled_in_terminal(dev_id: int, enabled: bool)
 signal compute_mode_selected(mode: String)
@@ -19,15 +20,10 @@ const FlagDatabaseScript = preload("res://scripts/utils/flag_database.gd")
 
 var _tab_container: TabContainer
 var _slots: Array[Dictionary] = []
-var _lbl_mode_status: Label
 var _lbl_cli_preview: Label
 var _lbl_engine_status: Label
 var _lbl_speed_val: Label
 var _lbl_progress_val: Label
-
-func set_active_tab(idx: int) -> void:
-	if _tab_container and idx >= 0 and idx < _tab_container.get_tab_count():
-		_tab_container.current_tab = idx
 
 # Attack Configuration Controls
 var _edit_hash: LineEdit
@@ -35,9 +31,18 @@ var _edit_wordlist: LineEdit
 var _edit_mask_rules: LineEdit
 var _edit_custom_flags: LineEdit
 var _opt_attack_mode: OptionButton
-var _opt_workload: OptionButton
 var _opt_hash_category: OptionButton
 var _opt_hash_algo: OptionButton
+
+# Workload Intensity Presets & Hex Controls
+var _selected_workload: int = 2
+var _btn_low: Button
+var _btn_mid: Button
+var _btn_high: Button
+var _lbl_intensity_desc: Label
+var _dial_gpu_load: Control
+var _dial_vram_bus: Control
+var _dial_core_clk: Control
 
 # Hash Detector Controls
 var _edit_detector_input: LineEdit
@@ -63,6 +68,10 @@ var _lbl_flag_details: RichTextLabel
 var _btn_add_flag: Button
 var _selected_flag_str: String = ""
 
+func set_active_tab(idx: int) -> void:
+	if _tab_container and idx >= 0 and idx < _tab_container.get_tab_count():
+		_tab_container.current_tab = idx
+
 func _ready() -> void:
 	custom_minimum_size = Vector2(1280, 800)
 	size = Vector2(1280, 800)
@@ -71,13 +80,13 @@ func _ready() -> void:
 func _build_ui() -> void:
 	for child in get_children():
 		child.queue_free()
-	_slots.clear()
 
+	# Root Panel with Translucent Cyber Glass (Glassmorphism)
 	var root_panel = PanelContainer.new()
 	root_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var root_sb = StyleBoxFlat.new()
-	root_sb.bg_color = Color("#070d18f4")
+	root_sb.bg_color = Color(0.02, 0.045, 0.09, 0.65) # Translucent Glass (Glassmorphism)
 	root_sb.border_width_left = 2
 	root_sb.border_width_top = 2
 	root_sb.border_width_right = 2
@@ -85,24 +94,24 @@ func _build_ui() -> void:
 	root_sb.border_color = Color("#00f0ff")
 	root_sb.set_corner_radius_all(10)
 	root_sb.content_margin_left = 18
-	root_sb.content_margin_top = 14
+	root_sb.content_margin_top = 12
 	root_sb.content_margin_right = 18
-	root_sb.content_margin_bottom = 14
+	root_sb.content_margin_bottom = 12
 	root_panel.add_theme_stylebox_override("panel", root_sb)
 	add_child(root_panel)
 
 	var main_vbox = VBoxContainer.new()
-	main_vbox.add_theme_constant_override("separation", 10)
+	main_vbox.add_theme_constant_override("separation", 8)
 	root_panel.add_child(main_vbox)
 
-	# 1. Header Bar
+	# 1. Header Bar with Cyberpunk Title and 2D Exit Button
 	var header = HBoxContainer.new()
 	header.add_theme_constant_override("separation", 12)
 
 	var lbl_title = Label.new()
-	lbl_title.text = "💠 HASHCAT QUANTUM OPERATOR TERMINAL"
+	lbl_title.text = "❖ HASHCAT QUANTUM OPERATOR TERMINAL"
 	lbl_title.add_theme_color_override("font_color", Color("#00f0ff"))
-	lbl_title.add_theme_font_size_override("font_size", 20)
+	lbl_title.add_theme_font_size_override("font_size", 18)
 	header.add_child(lbl_title)
 
 	var header_spacer = Control.new()
@@ -111,7 +120,7 @@ func _build_ui() -> void:
 
 	var btn_exit_2d = Button.new()
 	btn_exit_2d.text = "⬅ ВЪРНИ СЕ В 2D"
-	btn_exit_2d.custom_minimum_size = Vector2(160, 36)
+	btn_exit_2d.custom_minimum_size = Vector2(150, 32)
 	_style_btn(btn_exit_2d, Color("#334155"), Color("#94a3b8"))
 	btn_exit_2d.pressed.connect(func():
 		request_exit_to_2d.emit()
@@ -121,7 +130,7 @@ func _build_ui() -> void:
 
 	main_vbox.add_child(header)
 
-	# 2. Main Tabs
+	# 2. Main 3 Tabs (Concept Art: Setup, Console & Execution, Flags Guide)
 	var tabs = TabContainer.new()
 	tabs.name = "TabContainer"
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -129,28 +138,21 @@ func _build_ui() -> void:
 	_tab_container = tabs
 	main_vbox.add_child(tabs)
 
-	# Tab 1: Hardware & Topology
-	var tab_hw = VBoxContainer.new()
-	tab_hw.name = "🎛️ ХАРДУЕР И ТОПОЛОГИЯ"
-	tab_hw.add_theme_constant_override("separation", 10)
-	tabs.add_child(tab_hw)
-	_build_hardware_tab(tab_hw)
-
-	# Tab 2: Attack Configuration & Hash Detector
+	# Tab 0: Attack Configuration & Workload Intensity Presets
 	var tab_atk = VBoxContainer.new()
 	tab_atk.name = "🎯 НАСТРОЙКА НА АТАКА"
 	tab_atk.add_theme_constant_override("separation", 10)
 	tabs.add_child(tab_atk)
 	_build_attack_tab(tab_atk)
 
-	# Tab 3: Execution, Live Console & Cracked Passwords
+	# Tab 1: Execution, Live Console & Cracked Passwords
 	var tab_con = VBoxContainer.new()
 	tab_con.name = "💻 КОНЗОЛА & ИЗПЪЛНЕНИЕ"
 	tab_con.add_theme_constant_override("separation", 10)
 	tabs.add_child(tab_con)
 	_build_console_tab(tab_con)
 
-	# Tab 4: Flags Guide
+	# Tab 2: Flags Guide
 	var tab_flg = VBoxContainer.new()
 	tab_flg.name = "📖 СЪВЕТНИК ЗА ФЛАГОВЕ"
 	tab_flg.add_theme_constant_override("separation", 10)
@@ -160,122 +162,7 @@ func _build_ui() -> void:
 	_update_cli_preview()
 
 # ==============================================================================
-# TAB 1: HARDWARE & TOPOLOGY
-# ==============================================================================
-func _build_hardware_tab(parent: VBoxContainer) -> void:
-	var mode_bar = HBoxContainer.new()
-	mode_bar.add_theme_constant_override("separation", 10)
-
-	var btn_cpu = Button.new()
-	btn_cpu.text = "🖥️ САМО CPU"
-	btn_cpu.custom_minimum_size = Vector2(180, 38)
-	_style_btn(btn_cpu, Color("#10b981"), Color("#10b981"))
-	btn_cpu.pressed.connect(func(): set_compute_mode("CPU"))
-	mode_bar.add_child(btn_cpu)
-
-	var btn_gpu = Button.new()
-	btn_gpu.text = "⚡ САМО GPU"
-	btn_gpu.custom_minimum_size = Vector2(180, 38)
-	_style_btn(btn_gpu, Color("#00f0ff"), Color("#00f0ff"))
-	btn_gpu.pressed.connect(func(): set_compute_mode("GPU"))
-	mode_bar.add_child(btn_gpu)
-
-	var btn_all = Button.new()
-	btn_all.text = "⚡+🖥️ ХИБРИДЕН"
-	btn_all.custom_minimum_size = Vector2(180, 38)
-	_style_btn(btn_all, Color("#a855f7"), Color("#c084fc"))
-	btn_all.pressed.connect(func(): set_compute_mode("ALL"))
-	mode_bar.add_child(btn_all)
-
-	parent.add_child(mode_bar)
-
-	_lbl_mode_status = Label.new()
-	_lbl_mode_status.text = "РЕЖИМ: САМО CPU (NUMA PROTECT - GPU СА ИЗОЛИРАНИ)"
-	_lbl_mode_status.add_theme_color_override("font_color", Color("#10b981"))
-	parent.add_child(_lbl_mode_status)
-
-	var scroll = ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(scroll)
-
-	var cards_vbox = VBoxContainer.new()
-	cards_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cards_vbox.add_theme_constant_override("separation", 8)
-	scroll.add_child(cards_vbox)
-
-	var detected_devices = HardwareInspectorScript.probe_compute_devices()
-	for dev in detected_devices:
-		var dev_id: int = dev.get("id", 1)
-		var dev_name: String = dev.get("name", "Device #" + str(dev_id))
-		var dev_type: String = dev.get("type", "GPU")
-		var dev_backend: String = dev.get("backend", "")
-		var is_cpu: bool = (dev_type == "CPU")
-		var is_en: bool = dev.get("enabled", is_cpu)
-
-		var card = PanelContainer.new()
-		var card_sb = StyleBoxFlat.new()
-		card_sb.bg_color = Color("#0f172a")
-		card_sb.border_width_left = 3
-		card_sb.border_width_top = 1
-		card_sb.border_width_right = 1
-		card_sb.border_width_bottom = 1
-		card_sb.border_color = Color("#10b981") if is_en else Color("#334155")
-		card_sb.set_corner_radius_all(8)
-		card_sb.content_margin_left = 12
-		card_sb.content_margin_right = 12
-		card_sb.content_margin_top = 8
-		card_sb.content_margin_bottom = 8
-		card.add_theme_stylebox_override("panel", card_sb)
-
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 14)
-
-		var chk = CheckBox.new()
-		chk.button_pressed = is_en
-		chk.text = "ACTIVE" if is_en else "ISOLATED"
-		chk.custom_minimum_size = Vector2(90, 0)
-		row.add_child(chk)
-
-		var icon_str = "🖥️ " if is_cpu else "⚡ "
-		var lbl_name = Label.new()
-		lbl_name.text = "%s#%d: %s [%s]" % [icon_str, dev_id, dev_name, dev_backend]
-		lbl_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		lbl_name.add_theme_color_override("font_color", Color("#e2e8f0"))
-		row.add_child(lbl_name)
-
-		var lbl_metric = Label.new()
-		lbl_metric.text = "38°C | LOAD 15%" if is_cpu else "48°C | LOAD 0%"
-		lbl_metric.custom_minimum_size = Vector2(140, 0)
-		lbl_metric.add_theme_color_override("font_color", Color("#f59e0b"))
-		row.add_child(lbl_metric)
-
-		var lbl_badge = Label.new()
-		lbl_badge.text = "[CPU ACTIVE]" if (is_en and is_cpu) else ("[GPU ACTIVE]" if is_en else "[STANDBY]")
-		lbl_badge.custom_minimum_size = Vector2(110, 0)
-		lbl_badge.add_theme_color_override("font_color", Color("#10b981") if is_en else Color("#64748b"))
-		row.add_child(lbl_badge)
-
-		card.add_child(row)
-		cards_vbox.add_child(card)
-
-		var slot_info = {
-			"id": dev_id,
-			"is_cpu": is_cpu,
-			"enabled": is_en,
-			"checkbox": chk,
-			"stylebox": card_sb,
-			"card": card,
-			"lbl_metric": lbl_metric,
-			"lbl_badge": lbl_badge
-		}
-		_slots.append(slot_info)
-
-		chk.toggled.connect(func(pressed: bool):
-			_on_device_toggled(dev_id, pressed)
-		)
-
-# ==============================================================================
-# TAB 2: ATTACK CONFIGURATION & HASH DETECTOR
+# TAB 0: ATTACK CONFIGURATION & WORKLOAD INTENSITY PRESETS
 # ==============================================================================
 func _build_attack_tab(parent: VBoxContainer) -> void:
 	var scroll = ScrollContainer.new()
@@ -284,19 +171,30 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 
 	var vbox = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 12)
+	vbox.add_theme_constant_override("separation", 10)
 	scroll.add_child(vbox)
 
-	# 1. Target Hash Input & Quick Presets
+	# Top Split: Left Column (Attack Config & Detector) | Right Column (Intensity Presets & Dials)
+	var top_split = HSplitContainer.new()
+	top_split.split_offset = 740
+	vbox.add_child(top_split)
+
+	# Left Column: Inputs & Config
+	var left_vbox = VBoxContainer.new()
+	left_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_vbox.add_theme_constant_override("separation", 8)
+	top_split.add_child(left_vbox)
+
+	# Target Hash & Quick Presets
 	var hash_box = VBoxContainer.new()
-	hash_box.add_theme_constant_override("separation", 6)
+	hash_box.add_theme_constant_override("separation", 4)
 	var lbl_hash_title = Label.new()
-	lbl_hash_title.text = "🎯 Целеви Хаш или Път до Файл:"
+	lbl_hash_title.text = "🎯 Целеви Хаш / Файл:"
 	lbl_hash_title.add_theme_color_override("font_color", Color("#38bdf8"))
 	hash_box.add_child(lbl_hash_title)
 
 	var h_row = HBoxContainer.new()
-	h_row.add_theme_constant_override("separation", 8)
+	h_row.add_theme_constant_override("separation", 6)
 	_edit_hash = LineEdit.new()
 	_edit_hash.text = "098f6bcd4621d373cade4e832627b4f6"
 	_edit_hash.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -304,7 +202,7 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 	h_row.add_child(_edit_hash)
 
 	var presets_bar = HBoxContainer.new()
-	presets_bar.add_theme_constant_override("separation", 6)
+	presets_bar.add_theme_constant_override("separation", 4)
 	var presets = [
 		{"name": "MD5", "hash": "098f6bcd4621d373cade4e832627b4f6", "mode": 0},
 		{"name": "NTLM", "hash": "b4b9b02e6f09a9bd760f388b67351e2b", "mode": 1000},
@@ -323,36 +221,36 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 		presets_bar.add_child(btn_p)
 	h_row.add_child(presets_bar)
 	hash_box.add_child(h_row)
-	vbox.add_child(hash_box)
+	left_vbox.add_child(hash_box)
 
-	# 2. Automated Hash Detector Panel
+	# Automated Hash Detector Box
 	var det_panel = PanelContainer.new()
 	var det_sb = StyleBoxFlat.new()
-	det_sb.bg_color = Color("#0b1329")
+	det_sb.bg_color = Color("#081122bf")
 	det_sb.border_width_left = 2
 	det_sb.border_width_top = 1
 	det_sb.border_width_right = 1
 	det_sb.border_width_bottom = 1
 	det_sb.border_color = Color("#38bdf8")
 	det_sb.set_corner_radius_all(6)
-	det_sb.content_margin_left = 10
-	det_sb.content_margin_right = 10
-	det_sb.content_margin_top = 8
-	det_sb.content_margin_bottom = 8
+	det_sb.content_margin_left = 8
+	det_sb.content_margin_right = 8
+	det_sb.content_margin_top = 6
+	det_sb.content_margin_bottom = 6
 	det_panel.add_theme_stylebox_override("panel", det_sb)
 
 	var det_vbox = VBoxContainer.new()
-	det_vbox.add_theme_constant_override("separation", 6)
+	det_vbox.add_theme_constant_override("separation", 4)
 
 	var det_header = HBoxContainer.new()
-	det_header.add_theme_constant_override("separation", 8)
+	det_header.add_theme_constant_override("separation", 6)
 	var lbl_det_title = Label.new()
-	lbl_det_title.text = "🔍 Интелигентен Анализатор на Хаш Формати:"
+	lbl_det_title.text = "🔍 Авто-Анализ на Формати:"
 	lbl_det_title.add_theme_color_override("font_color", Color("#38bdf8"))
 	det_header.add_child(lbl_det_title)
 
 	_edit_detector_input = LineEdit.new()
-	_edit_detector_input.placeholder_text = "Поставете непознат хаш за автоматичен анализ..."
+	_edit_detector_input.placeholder_text = "Поставете непознат хаш..."
 	_edit_detector_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	det_header.add_child(_edit_detector_input)
 
@@ -373,48 +271,32 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 
 	_lbl_detector_results = RichTextLabel.new()
 	_lbl_detector_results.bbcode_enabled = true
-	_lbl_detector_results.text = "[color=#64748b]Поставете хеш низ за мигновен анализ на битова дължина и сигнатура.[/color]"
+	_lbl_detector_results.text = "[color=#64748b]Поставете хеш низ за мигновен анализ на сигнатурата.[/color]"
 	_lbl_detector_results.fit_content = true
 	det_vbox.add_child(_lbl_detector_results)
-
 	det_panel.add_child(det_vbox)
-	vbox.add_child(det_panel)
+	left_vbox.add_child(det_panel)
 
-	# 3. Mode, Algorithm, Workload Grid
+	# Grid for Mode, Algorithm, Wordlist, Mask
 	var grid = GridContainer.new()
 	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 16)
-	grid.add_theme_constant_override("v_separation", 10)
-	vbox.add_child(grid)
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 6)
+	left_vbox.add_child(grid)
 
-	# Row 1: Attack Mode (-a) & Workload (-w)
 	var lbl_atk_mode = Label.new()
 	lbl_atk_mode.text = "Режим на атаката (-a):"
 	grid.add_child(lbl_atk_mode)
 
 	_opt_attack_mode = OptionButton.new()
 	_opt_attack_mode.add_item("0 - Straight (Речник / Wordlist)", 0)
-	_opt_attack_mode.add_item("1 - Combination (Комбинация от 2 речника)", 1)
+	_opt_attack_mode.add_item("1 - Combination (Комбинация)", 1)
 	_opt_attack_mode.add_item("3 - Brute-force / Mask (Маска)", 3)
-	_opt_attack_mode.add_item("6 - Hybrid Wordlist + Mask (Речник + Маска)", 6)
-	_opt_attack_mode.add_item("7 - Hybrid Mask + Wordlist (Маска + Речник)", 7)
+	_opt_attack_mode.add_item("6 - Hybrid Wordlist + Mask", 6)
+	_opt_attack_mode.add_item("7 - Hybrid Mask + Wordlist", 7)
 	_opt_attack_mode.item_selected.connect(func(_idx): _update_cli_preview())
 	grid.add_child(_opt_attack_mode)
 
-	var lbl_workload = Label.new()
-	lbl_workload.text = "Натоварване (-w Workload Profile):"
-	grid.add_child(lbl_workload)
-
-	_opt_workload = OptionButton.new()
-	_opt_workload.add_item("-w 1: Low (Нормален десктоп)", 1)
-	_opt_workload.add_item("-w 2: Default (Балансиран)", 2)
-	_opt_workload.add_item("-w 3: High (Специализиран риг)", 3)
-	_opt_workload.add_item("-w 4: Nightmare (100% GPU Сатурация)", 4)
-	_opt_workload.select(2) # Default to -w 3 High
-	_opt_workload.item_selected.connect(func(_idx): _update_cli_preview())
-	grid.add_child(_opt_workload)
-
-	# Row 2: Hash Algorithm Category & Algorithm (-m)
 	var lbl_cat = Label.new()
 	lbl_cat.text = "Категория алгоритми:"
 	grid.add_child(lbl_cat)
@@ -433,7 +315,6 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 	_opt_hash_algo.item_selected.connect(func(_idx): _update_cli_preview())
 	grid.add_child(_opt_hash_algo)
 
-	# Row 3: Wordlist & Rules / Mask
 	var lbl_wl = Label.new()
 	lbl_wl.text = "Речник (Wordlist):"
 	grid.add_child(lbl_wl)
@@ -445,7 +326,7 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 	grid.add_child(_edit_wordlist)
 
 	var lbl_mask = Label.new()
-	lbl_mask.text = "Маска / Файл с правила (-r / Mask):"
+	lbl_mask.text = "Маска / Правила (-r / Mask):"
 	grid.add_child(lbl_mask)
 
 	_edit_mask_rules = LineEdit.new()
@@ -453,21 +334,125 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 	_edit_mask_rules.text_changed.connect(func(_t): _update_cli_preview())
 	grid.add_child(_edit_mask_rules)
 
-	# Row 4: Custom Flags
 	var lbl_flags = Label.new()
-	lbl_flags.text = "Потребителски флагове (Custom Flags):"
+	lbl_flags.text = "Потребителски флагове:"
 	grid.add_child(lbl_flags)
 
 	_edit_custom_flags = LineEdit.new()
-	_edit_custom_flags.placeholder_text = "-O --status --status-timer 1"
 	_edit_custom_flags.text = "-O"
 	_edit_custom_flags.text_changed.connect(func(_t): _update_cli_preview())
 	grid.add_child(_edit_custom_flags)
 
-	# 4. Live CLI Command Preview
+	# -------------------------------------------------------------------------
+	# Right Column: "ИНТЕНЗИВНОСТ (пресети за натоварване)" & Dials (Concept Art)
+	# -------------------------------------------------------------------------
+	var right_panel = PanelContainer.new()
+	right_panel.custom_minimum_size = Vector2(360, 0)
+	var right_sb = StyleBoxFlat.new()
+	right_sb.bg_color = Color("#07101f99")
+	right_sb.border_width_left = 1
+	right_sb.border_width_top = 1
+	right_sb.border_width_right = 1
+	right_sb.border_width_bottom = 1
+	right_sb.border_color = Color("#00f0ff")
+	right_sb.set_corner_radius_all(8)
+	right_sb.content_margin_left = 14
+	right_sb.content_margin_right = 14
+	right_sb.content_margin_top = 10
+	right_sb.content_margin_bottom = 10
+	right_panel.add_theme_stylebox_override("panel", right_sb)
+	top_split.add_child(right_panel)
+
+	var intensity_vbox = VBoxContainer.new()
+	intensity_vbox.add_theme_constant_override("separation", 10)
+	right_panel.add_child(intensity_vbox)
+
+	# Section Header
+	var int_header = HBoxContainer.new()
+	int_header.add_theme_constant_override("separation", 8)
+	var lbl_int_title = Label.new()
+	lbl_int_title.text = "ИНТЕНЗИВНОСТ"
+	lbl_int_title.add_theme_font_size_override("font_size", 16)
+	lbl_int_title.add_theme_color_override("font_color", Color("#00f0ff"))
+	int_header.add_child(lbl_int_title)
+
+	var lbl_int_sub = Label.new()
+	lbl_int_sub.text = "(пресети за натоварване)"
+	lbl_int_sub.add_theme_color_override("font_color", Color("#94a3b8"))
+	lbl_int_sub.add_theme_font_size_override("font_size", 12)
+	int_header.add_child(lbl_int_sub)
+
+	var sp = Control.new()
+	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	int_header.add_child(sp)
+
+	var lbl_mini_wave = Label.new()
+	lbl_mini_wave.text = "ılıllı"
+	lbl_mini_wave.add_theme_color_override("font_color", Color("#f59e0b"))
+	lbl_mini_wave.add_theme_font_size_override("font_size", 14)
+	int_header.add_child(lbl_mini_wave)
+
+	intensity_vbox.add_child(int_header)
+
+	# 3 Prominent Intensity Buttons: [LOW], [MID], [HIGH] (matching concept)
+	var hex_bar = HBoxContainer.new()
+	hex_bar.add_theme_constant_override("separation", 10)
+
+	_btn_low = Button.new()
+	_btn_low.text = "[ LOW ]\n-w 1"
+	_btn_low.custom_minimum_size = Vector2(98, 54)
+	_btn_low.pressed.connect(func(): _set_intensity(1))
+	hex_bar.add_child(_btn_low)
+
+	_btn_mid = Button.new()
+	_btn_mid.text = "[ MID ]\n-w 2"
+	_btn_mid.custom_minimum_size = Vector2(106, 58)
+	_btn_mid.pressed.connect(func(): _set_intensity(2))
+	hex_bar.add_child(_btn_mid)
+
+	_btn_high = Button.new()
+	_btn_high.text = "[ HIGH ]\n-w 3"
+	_btn_high.custom_minimum_size = Vector2(98, 54)
+	_btn_high.pressed.connect(func(): _set_intensity(3))
+	hex_bar.add_child(_btn_high)
+
+	intensity_vbox.add_child(hex_bar)
+
+	_lbl_intensity_desc = Label.new()
+	_lbl_intensity_desc.text = "Балансиран режим (-w 2). Препоръчителен за продължителна работа."
+	_lbl_intensity_desc.add_theme_color_override("font_color", Color("#38bdf8"))
+	_lbl_intensity_desc.add_theme_font_size_override("font_size", 11)
+	_lbl_intensity_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	intensity_vbox.add_child(_lbl_intensity_desc)
+
+	# 3 Circular Arc Telemetry Gauges (matching circular dials in concept art)
+	var dials_header = Label.new()
+	dials_header.text = "АКТИВНА ТЕЛЕМЕТРИЯ НА ИЗЧИСЛИТЕЛНИТЕ ЯДРА:"
+	dials_header.add_theme_font_size_override("font_size", 11)
+	dials_header.add_theme_color_override("font_color", Color("#64748b"))
+	intensity_vbox.add_child(dials_header)
+
+	var dials_row = HBoxContainer.new()
+	dials_row.add_theme_constant_override("separation", 16)
+	dials_row.alignment = BoxContainer.ALIGNMENT_CENTER
+
+	_dial_gpu_load = _create_circular_dial("23%", "GPU LOAD", 0.23, Color("#00f0ff"))
+	dials_row.add_child(_dial_gpu_load)
+
+	_dial_vram_bus = _create_circular_dial("26%", "VRAM BUS", 0.26, Color("#38bdf8"))
+	dials_row.add_child(_dial_vram_bus)
+
+	_dial_core_clk = _create_circular_dial("78%", "CORE CLK", 0.78, Color("#10b981"))
+	dials_row.add_child(_dial_core_clk)
+
+	intensity_vbox.add_child(dials_row)
+
+	_refresh_intensity_styles()
+
+	# Bottom: Live CLI Command Preview Box
 	var cli_panel = PanelContainer.new()
 	var cli_sb = StyleBoxFlat.new()
-	cli_sb.bg_color = Color("#050811")
+	cli_sb.bg_color = Color("#040813")
 	cli_sb.border_width_left = 1
 	cli_sb.border_width_top = 1
 	cli_sb.border_width_right = 1
@@ -476,8 +461,8 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 	cli_sb.set_corner_radius_all(6)
 	cli_sb.content_margin_left = 14
 	cli_sb.content_margin_right = 14
-	cli_sb.content_margin_top = 10
-	cli_sb.content_margin_bottom = 10
+	cli_sb.content_margin_top = 8
+	cli_sb.content_margin_bottom = 8
 	cli_panel.add_theme_stylebox_override("panel", cli_sb)
 
 	_lbl_cli_preview = Label.new()
@@ -488,10 +473,9 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 	vbox.add_child(cli_panel)
 
 # ==============================================================================
-# TAB 3: LIVE CONSOLE, TELEMETRY & CRACKED PASSWORDS
+# TAB 1: LIVE CONSOLE, TELEMETRY & CRACKED PASSWORDS
 # ==============================================================================
 func _build_console_tab(parent: VBoxContainer) -> void:
-	# Action Toolbar
 	var action_bar = HBoxContainer.new()
 	action_bar.add_theme_constant_override("separation", 12)
 
@@ -537,7 +521,7 @@ func _build_console_tab(parent: VBoxContainer) -> void:
 	# Live Metrics Strip
 	var metrics_panel = PanelContainer.new()
 	var m_sb = StyleBoxFlat.new()
-	m_sb.bg_color = Color("#09101d")
+	m_sb.bg_color = Color("#07101fb2")
 	m_sb.set_corner_radius_all(6)
 	m_sb.content_margin_left = 12
 	m_sb.content_margin_right = 12
@@ -576,7 +560,7 @@ func _build_console_tab(parent: VBoxContainer) -> void:
 	var con_box = VBoxContainer.new()
 	con_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var lbl_con_title = Label.new()
-	lbl_con_title.text = "💻 Hashcat Live Log:"
+	lbl_con_title.text = "💻 Hashcat Live Stream Output:"
 	lbl_con_title.add_theme_color_override("font_color", Color("#94a3b8"))
 	con_box.add_child(lbl_con_title)
 
@@ -584,7 +568,7 @@ func _build_console_tab(parent: VBoxContainer) -> void:
 	_console_log.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_console_log.scroll_following = true
 	_console_log.bbcode_enabled = true
-	_console_log.text = "[color=#00f0ff]=== HASHCAT QUANTUM OPERATIONS CONSOLE INITIALIZED ===[/color]\n[color=#10b981][INFO] System topology verified. 5 compute nodes ready.[/color]\n"
+	_console_log.text = "[color=#00f0ff]=== HASHCAT QUANTUM OPERATIONS CONSOLE INITIALIZED ===[/color]\n[color=#10b981][INFO] System topology verified. Compute nodes ready.[/color]\n"
 	con_box.add_child(_console_log)
 	split.add_child(con_box)
 
@@ -617,7 +601,7 @@ func _build_console_tab(parent: VBoxContainer) -> void:
 	split.add_child(cracked_box)
 
 # ==============================================================================
-# TAB 4: FLAGS GUIDE
+# TAB 2: FLAGS GUIDE
 # ==============================================================================
 func _build_flags_guide_tab(parent: VBoxContainer) -> void:
 	var toolbar = HBoxContainer.new()
@@ -651,7 +635,6 @@ func _build_flags_guide_tab(parent: VBoxContainer) -> void:
 	split.split_offset = 650
 	parent.add_child(split)
 
-	# Left: Flags Tree
 	_tree_flags = Tree.new()
 	_tree_flags.columns = 3
 	_tree_flags.set_column_title(0, "Флаг / Опция")
@@ -661,7 +644,6 @@ func _build_flags_guide_tab(parent: VBoxContainer) -> void:
 	_tree_flags.item_selected.connect(_on_flag_tree_selected)
 	split.add_child(_tree_flags)
 
-	# Right: Flag Details Card
 	var details_vbox = VBoxContainer.new()
 	details_vbox.custom_minimum_size = Vector2(340, 0)
 	details_vbox.add_theme_constant_override("separation", 10)
@@ -674,7 +656,7 @@ func _build_flags_guide_tab(parent: VBoxContainer) -> void:
 	_lbl_flag_details = RichTextLabel.new()
 	_lbl_flag_details.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_lbl_flag_details.bbcode_enabled = true
-	_lbl_flag_details.text = "[color=#64748b]Изберете опция от списъка вляво за подробна справка и синтаксис.[/color]"
+	_lbl_flag_details.text = "[color=#64748b]Изберете опция от списъка вляво за справка.[/color]"
 	details_vbox.add_child(_lbl_flag_details)
 
 	_btn_add_flag = Button.new()
@@ -687,6 +669,80 @@ func _build_flags_guide_tab(parent: VBoxContainer) -> void:
 	split.add_child(details_vbox)
 
 	_populate_flags_tree()
+
+# ==============================================================================
+# INTENSITY PRESETS & CIRCULAR GAUGES
+# ==============================================================================
+func _set_intensity(w_level: int) -> void:
+	_selected_workload = w_level
+	_refresh_intensity_styles()
+	_update_cli_preview()
+
+func _refresh_intensity_styles() -> void:
+	if not _btn_low or not _btn_mid or not _btn_high:
+		return
+
+	# Style LOW
+	if _selected_workload == 1:
+		_style_intensity_btn(_btn_low, Color("#00a8ff"), Color("#0a1f3c"), Color("#f1f5f9"), true)
+		_lbl_intensity_desc.text = "Режим LOW (-w 1): Минимален разход. Работи тихо в десктоп фонов режим."
+	else:
+		_style_intensity_btn(_btn_low, Color("#1e293b"), Color("#09101d"), Color("#64748b"), false)
+
+	# Style MID
+	if _selected_workload == 2:
+		_style_intensity_btn(_btn_mid, Color("#00f0ff"), Color("#082b3d"), Color("#00f0ff"), true)
+		_lbl_intensity_desc.text = "Режим MID (-w 2): Балансиран режим. Препоръчителен за продължителна работа."
+	else:
+		_style_intensity_btn(_btn_mid, Color("#1e293b"), Color("#09101d"), Color("#64748b"), false)
+
+	# Style HIGH
+	if _selected_workload >= 3:
+		_style_intensity_btn(_btn_high, Color("#f59e0b"), Color("#3d2208"), Color("#fbbf24"), true)
+		_lbl_intensity_desc.text = "Режим HIGH (-w 3): Максимална производителност. 100% GPU ядрена сатурация."
+	else:
+		_style_intensity_btn(_btn_high, Color("#1e293b"), Color("#09101d"), Color("#64748b"), false)
+
+func _style_intensity_btn(btn: Button, border_col: Color, bg_col: Color, text_col: Color, is_active: bool) -> void:
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = bg_col
+	sb.border_width_left = 2 if is_active else 1
+	sb.border_width_top = 2 if is_active else 1
+	sb.border_width_right = 2 if is_active else 1
+	sb.border_width_bottom = 2 if is_active else 1
+	sb.border_color = border_col
+	sb.set_corner_radius_all(10)
+	if is_active:
+		sb.shadow_color = Color(border_col, 0.45)
+		sb.shadow_size = 4
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.add_theme_stylebox_override("hover", sb)
+	btn.add_theme_stylebox_override("pressed", sb)
+	btn.add_theme_color_override("font_color", text_col)
+
+func _create_circular_dial(val_text: String, lbl_text: String, fill_ratio: float, col: Color) -> Control:
+	var dial = Control.new()
+	dial.custom_minimum_size = Vector2(88, 88)
+	dial.set_meta("val", val_text)
+	dial.set_meta("lbl", lbl_text)
+	dial.set_meta("ratio", fill_ratio)
+	dial.set_meta("col", col)
+
+	dial.draw.connect(func():
+		var center = dial.size * 0.5
+		var radius = min(dial.size.x, dial.size.y) * 0.40
+		# Background ring
+		dial.draw_arc(center, radius, 0.0, TAU, 36, Color(col, 0.18), 3.0, true)
+		# Active arc
+		var start_angle = -PI * 0.5
+		var sweep = fill_ratio * TAU
+		dial.draw_arc(center, radius, start_angle, start_angle + sweep, 36, col, 4.0, true)
+		# Value text
+		var font = ThemeDB.fallback_font
+		dial.draw_string(font, Vector2(center.x - 24, center.y + 4), val_text, HORIZONTAL_ALIGNMENT_CENTER, 48, 13, Color("#f8fafc"))
+		dial.draw_string(font, Vector2(center.x - 30, center.y + 20), lbl_text, HORIZONTAL_ALIGNMENT_CENTER, 60, 9, Color(col, 0.95))
+	)
+	return dial
 
 # ==============================================================================
 # HASH ALGORITHM & CATEGORY POPULATION
@@ -883,11 +939,9 @@ func _build_attack_args(is_bench: bool = false) -> Array:
 		args.append("-a")
 		args.append(str(a_code))
 
-	# 3. Workload
-	if _opt_workload:
-		var w_code: int = _opt_workload.get_selected_id()
-		args.append("-w")
-		args.append(str(w_code))
+	# 3. Workload from Intensity Presets
+	args.append("-w")
+	args.append(str(_selected_workload))
 
 	# 4. Hardware devices flag
 	var dev_flag: String = HardwareInspectorScript.get_cli_device_flag()
@@ -956,97 +1010,12 @@ func _update_engine_state_ui(state_str: String, col: Color) -> void:
 		_lbl_engine_status.text = "СТАТУС: " + state_str
 		_lbl_engine_status.add_theme_color_override("font_color", col)
 
-# ==============================================================================
-# HARDWARE MODES & SYNC
-# ==============================================================================
-func set_compute_mode(mode: String) -> void:
-	for slot in _slots:
-		var activate: bool = false
-		if mode == "CPU":
-			activate = slot["is_cpu"]
-		elif mode == "GPU":
-			activate = not slot["is_cpu"]
-		elif mode == "ALL":
-			activate = true
-
-		slot["enabled"] = activate
-		slot["checkbox"].button_pressed = activate
-		_update_slot_visuals(slot)
-		HardwareInspectorScript.set_device_enabled(slot["id"], activate)
-		device_toggled_in_terminal.emit(slot["id"], activate)
-
-	_update_mode_label()
-	_update_cli_preview()
-	compute_mode_selected.emit(mode)
-
-func _on_device_toggled(dev_id: int, pressed: bool) -> void:
-	for slot in _slots:
-		if slot["id"] == dev_id:
-			slot["enabled"] = pressed
-			_update_slot_visuals(slot)
-			HardwareInspectorScript.set_device_enabled(dev_id, pressed)
-			device_toggled_in_terminal.emit(dev_id, pressed)
-			break
-	_update_mode_label()
+# Compatibility helper methods for external sync
+func sync_device_state(_dev_id: int, _enabled: bool) -> void:
 	_update_cli_preview()
 
-func sync_device_state(dev_id: int, enabled: bool) -> void:
-	for slot in _slots:
-		if slot["id"] == dev_id:
-			slot["enabled"] = enabled
-			if slot["checkbox"].button_pressed != enabled:
-				slot["checkbox"].button_pressed = enabled
-			_update_slot_visuals(slot)
-			break
-	_update_mode_label()
-	_update_cli_preview()
-
-func update_device_metrics(dev_id: int, temp: float, fan: float, util: float) -> void:
-	for slot in _slots:
-		if slot["id"] == dev_id:
-			if slot["enabled"]:
-				slot["lbl_metric"].text = "%.0f°C | FAN %.0f%% | LOAD %.0f%%" % [temp, fan, util]
-			else:
-				slot["lbl_metric"].text = "32°C | STANDBY"
-			return
-
-func _update_slot_visuals(slot: Dictionary) -> void:
-	var en: bool = slot["enabled"]
-	var is_cpu: bool = slot["is_cpu"]
-	slot["checkbox"].text = "ACTIVE" if en else "ISOLATED"
-	slot["stylebox"].border_color = Color("#10b981") if en else Color("#334155")
-	if en:
-		slot["lbl_badge"].text = "[CPU ACTIVE]" if is_cpu else "[GPU ACTIVE]"
-		slot["lbl_badge"].add_theme_color_override("font_color", Color("#10b981") if is_cpu else Color("#00f0ff"))
-	else:
-		slot["lbl_badge"].text = "[STANDBY]"
-		slot["lbl_badge"].add_theme_color_override("font_color", Color("#64748b"))
-	slot["card"].queue_redraw()
-
-func _update_mode_label() -> void:
-	if not _lbl_mode_status:
-		return
-	var active_cpus: int = 0
-	var active_gpus: int = 0
-	for slot in _slots:
-		if slot["enabled"]:
-			if slot["is_cpu"]:
-				active_cpus += 1
-			else:
-				active_gpus += 1
-
-	if active_cpus > 0 and active_gpus == 0:
-		_lbl_mode_status.text = "РЕЖИМ: САМО CPU (NUMA PROTECT - GPU СА ИЗОЛИРАНИ)"
-		_lbl_mode_status.add_theme_color_override("font_color", Color("#10b981"))
-	elif active_gpus > 0 and active_cpus == 0:
-		_lbl_mode_status.text = "РЕЖИМ: САМО GPU (%d УСКОРИТЕЛЯ АКТИВНИ)" % active_gpus
-		_lbl_mode_status.add_theme_color_override("font_color", Color("#00f0ff"))
-	elif active_gpus > 0 and active_cpus > 0:
-		_lbl_mode_status.text = "РЕЖИМ: ХИБРИДЕН (%d GPU + %d CPU ВЪЗЛИ)" % [active_gpus, active_cpus]
-		_lbl_mode_status.add_theme_color_override("font_color", Color("#c084fc"))
-	else:
-		_lbl_mode_status.text = "РЕЖИМ: ВСИЧКИ УСТРОЙСТВА СА ИЗОЛИРАНИ"
-		_lbl_mode_status.add_theme_color_override("font_color", Color("#ef4444"))
+func update_device_metrics(_dev_id: int, _temp: float, _fan: float, _util: float) -> void:
+	pass
 
 func _update_cli_preview() -> void:
 	if _lbl_cli_preview:
@@ -1055,16 +1024,17 @@ func _update_cli_preview() -> void:
 
 func _style_btn(btn: Button, border_col: Color, text_col: Color) -> void:
 	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color("#0d1726")
+	sb.bg_color = Color("#07122499")
 	sb.border_width_left = 1
 	sb.border_width_top = 1
 	sb.border_width_right = 1
 	sb.border_width_bottom = 2
 	sb.border_color = border_col
 	sb.set_corner_radius_all(6)
-	sb.content_margin_left = 14
-	sb.content_margin_right = 14
-	sb.content_margin_top = 6
-	sb.content_margin_bottom = 6
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	sb.content_margin_top = 5
+	sb.content_margin_bottom = 5
 	btn.add_theme_stylebox_override("normal", sb)
 	btn.add_theme_color_override("font_color", text_col)
+
