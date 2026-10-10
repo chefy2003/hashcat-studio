@@ -15,19 +15,19 @@ var current_preset: ViewPreset = ViewPreset.OPERATOR_FRONT
 
 var _preset_transforms: Dictionary = {
 	ViewPreset.OPERATOR_FRONT: {
-		"position": Vector3(0.0, 1.35, 2.65),
+		"position": Vector3(0.0, 1.38, 2.85),
 		"rotation_degrees": Vector3(-4.0, 0.0, 0.0)
 	},
 	ViewPreset.RACK_TELEMETRY: {
-		"position": Vector3(-2.0, 1.1, 2.1),
-		"rotation_degrees": Vector3(-4.0, 24.0, 0.0)
+		"position": Vector3(-2.6, 1.15, 1.9),
+		"rotation_degrees": Vector3(-4.0, 22.0, 0.0)
 	},
 	ViewPreset.HASHRATE_WAVE: {
-		"position": Vector3(2.2, 1.45, 1.6),
-		"rotation_degrees": Vector3(-12.0, -32.0, 0.0)
+		"position": Vector3(2.7, 1.25, 2.0),
+		"rotation_degrees": Vector3(-6.0, -18.0, 0.0)
 	},
 	ViewPreset.WIDE_OVERVIEW: {
-		"position": Vector3(0.0, 2.2, 4.1),
+		"position": Vector3(0.0, 2.2, 4.2),
 		"rotation_degrees": Vector3(-18.0, 0.0, 0.0)
 	}
 }

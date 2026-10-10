@@ -188,7 +188,7 @@ func _build_floating_labels() -> void:
 	_lbl_rate.outline_modulate = Color("#0f172a")
 	_lbl_rate.outline_size = 5
 	_lbl_rate.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	_lbl_rate.position = Vector3(0.0, 0.45, 0.8)
+	_lbl_rate.position = Vector3(0.0, 0.64, 0.8)
 	add_child(_lbl_rate)
 
 	# 4. Hardware Node Summary
@@ -199,5 +199,5 @@ func _build_floating_labels() -> void:
 	_lbl_topology.outline_modulate = Color("#0f172a")
 	_lbl_topology.outline_size = 3
 	_lbl_topology.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	_lbl_topology.position = Vector3(0.0, 0.28, 0.8)
+	_lbl_topology.position = Vector3(0.0, 0.46, 0.8)
 	add_child(_lbl_topology)
