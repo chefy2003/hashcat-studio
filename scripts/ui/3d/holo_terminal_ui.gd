@@ -1050,4 +1050,3 @@ func _style_btn(btn: Button, border_col: Color, text_col: Color) -> void:
 	sb.content_margin_bottom = 5
 	btn.add_theme_stylebox_override("normal", sb)
 	btn.add_theme_color_override("font_color", text_col)
-
