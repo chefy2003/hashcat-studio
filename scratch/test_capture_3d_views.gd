@@ -53,9 +53,9 @@ func _capture_views() -> void:
 	img_core.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_core_overclock.png")
 	print("Saved verify_3d_core_overclock.png")
 
-	# 3. Capture Thermal Multi-Color Wave (Blue base -> Yellow mid -> Ruby Red peak)
-	cam.global_position = Vector3(1.4, 1.20, -1.5)
-	cam.rotation_degrees = Vector3(-4.0, -32.0, 0.0)
+	# 3. Capture Thermal Multi-Color Curved Wave (Blue base -> Yellow mid -> Ruby Red peak)
+	cam.global_position = Vector3(1.0, 1.30, -2.2)
+	cam.rotation_degrees = Vector3(-6.0, -20.0, 0.0)
 	for i in range(16):
 		await process_frame
 	var img_wave = win.get_texture().get_image()

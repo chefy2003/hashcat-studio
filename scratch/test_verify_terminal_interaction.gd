@@ -49,11 +49,11 @@ func _run_test() -> void:
 
 	# 3. VERIFY PROXIMITY DETECTION & INTERACTION PROMPT
 	# Move camera into interaction range (< 5.2m from terminal)
-	cam.global_position = Vector3(4.2, 1.35, 1.5)
+	cam.global_position = Vector3(3.2, 1.4, -2.1)
 	for i in range(3):
 		await process_frame
 	if not term.is_player_in_range:
-		print("FAIL: Player should be in range at 4.2m")
+		print("FAIL: Player should be in range near terminal at ", cam.global_position, " vs term ", term.global_position)
 		quit(1)
 		return
 	if not term._lbl_interaction_prompt.visible:

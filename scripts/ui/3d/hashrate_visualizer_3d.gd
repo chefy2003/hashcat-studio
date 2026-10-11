@@ -7,6 +7,9 @@ extends Node3D
 @export var sample_count: int = 36
 @export var bar_spacing: float = 0.14
 @export var max_height: float = 1.8
+@export var is_curved: bool = true
+@export var arc_radius: float = 4.60
+@export var arc_angle_span_deg: float = 48.0
 
 var _multi_mesh_instance: MultiMeshInstance3D
 var _height_values: PackedFloat32Array = PackedFloat32Array()
@@ -87,16 +90,29 @@ func _update_instance_transforms() -> void:
 
 	var mm = _multi_mesh_instance.multimesh
 	var half_width = (float(sample_count) * bar_spacing) * 0.5
+	var span_rad: float = deg_to_rad(arc_angle_span_deg)
 
 	for i in range(sample_count):
 		var h = max(_height_values[i], 0.05)
-		var x = (float(i) * bar_spacing) - half_width
 		var y = h * 0.5 # Origin at bottom
-		var z = 0.0
 
 		var t = Transform3D()
-		t = t.scaled(Vector3(1.0, h, 1.0))
-		t.origin = Vector3(x, y, z)
+		if is_curved:
+			# Evenly distribute bars across the arc
+			var factor: float = (float(i) / float(max(sample_count - 1, 1))) - 0.5 # [-0.5, 0.5]
+			var theta: float = factor * span_rad
+			# Position bars along circle radius arc; curves backward so distance to core is exactly arc_radius
+			var x = arc_radius * sin(theta)
+			var z = arc_radius * (1.0 - cos(theta))
+			# Rotate the bar so its face points inward toward the Quantum Core
+			t = t.rotated(Vector3.UP, -theta)
+			t = t.scaled(Vector3(1.0, h, 1.0))
+			t.origin = Vector3(x, y, z)
+		else:
+			var x = (float(i) * bar_spacing) - half_width
+			t = t.scaled(Vector3(1.0, h, 1.0))
+			t.origin = Vector3(x, y, 0.0)
+
 		mm.set_instance_transform(i, t)
 
 		# Color gradient: Cyan (#00FFFF) to Deep Blue (#0055FF) across bars without overexposure

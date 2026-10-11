@@ -66,19 +66,19 @@ light_color = Color(0.78, 0.88, 1, 1)
 light_energy = 0.45
 
 [node name="RackFillLight" type="OmniLight3D" parent="." unique_id=381920193]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.4, 1.6, -0.7)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 1.6, -2.4)
 light_color = Color(0.22, 0.74, 0.97, 1)
 light_energy = 0.95
 omni_range = 5.5
 
 [node name="TerminalFillLight" type="OmniLight3D" parent="." unique_id=481920195]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 1.6, 0.6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 1.6, -2.4)
 light_color = Color(0, 0.94, 1, 1)
 light_energy = 0.95
 omni_range = 5.5
 
 [node name="WaveFillLight" type="OmniLight3D" parent="." unique_id=581920194]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4, 1.4, -2.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -4.4)
 light_color = Color(0.06, 0.73, 0.51, 1)
 light_energy = 0.9
 omni_range = 5.0
@@ -96,31 +96,31 @@ script = ExtResource("2_cam02")
 script = ExtResource("4_holo04")
 
 [node name="ServerRack3D" type="Node3D" parent="." unique_id=712948102]
-transform = Transform3D(0.788011, 0, 0.615661, 0, 1, 0, -0.615661, 0, 0.788011, -3.8, 0, -1)
+transform = Transform3D(0.819152, 0, 0.573576, 0, 1, 0, -0.573576, 0, 0.819152, -3.77, 0, -2.64)
 script = ExtResource("5_rck05")
 
 [node name="HoloTerminal3D" type="Node3D" parent="." unique_id=782910481]
-transform = Transform3D(0.669131, 0, -0.743145, 0, 1, 0, 0.743145, 0, 0.669131, 5.2, 1.35, 0.6)
+transform = Transform3D(0.573576, 0, -0.819152, 0, 1, 0, 0.819152, 0, 0.573576, 3.77, 1.35, -2.64)
 script = ExtResource("8_term08")
 
 [node name="HashrateVisualizer3D" type="Node3D" parent="." unique_id=839102847]
-transform = Transform3D(0.882948, 0, -0.469472, 0, 1, 0, 0.469472, 0, 0.882948, 3.4, 0.15, -3.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, -4.6)
 script = ExtResource("6_vis06")
 
 [node name="ConduitRackToCore" type="Node3D" parent="." groups=["energy_conduits"]]
 script = ExtResource("9_cond09")
-start_point = Vector3(-3.4, 0, -0.8)
-end_point = Vector3(-1.1, 0, -0.2)
+start_point = Vector3(-3.45, 0, -2.42)
+end_point = Vector3(-1.11, 0, -0.77)
 
 [node name="ConduitCoreToWave" type="Node3D" parent="." groups=["energy_conduits"]]
 script = ExtResource("9_cond09")
-start_point = Vector3(1.1, 0, -0.6)
-end_point = Vector3(3.2, 0, -3.0)
+start_point = Vector3(0, 0, -1.35)
+end_point = Vector3(0, 0, -4.45)
 
 [node name="ConduitCoreToTerminal" type="Node3D" parent="." groups=["energy_conduits"]]
 script = ExtResource("9_cond09")
-start_point = Vector3(1.1, 0, 0.4)
-end_point = Vector3(4.6, 0, 0.6)
+start_point = Vector3(1.11, 0, -0.77)
+end_point = Vector3(3.45, 0, -2.42)
 
 [node name="Bulkhead_LeftBack" type="Node3D" parent="."]
 transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, -8.5, 0, -6)

@@ -45,27 +45,27 @@ var _preset_transforms: Dictionary = {
 		"rotation_degrees": Vector3(-6.0, 0.0, 0.0)
 	},
 	ViewPreset.RACK_TELEMETRY: {
-		"position": Vector3(-2.88, EYE_HEIGHT, 0.18),
-		"rotation_degrees": Vector3(-4.0, 38.0, 0.0)
+		"position": Vector3(-2.80, EYE_HEIGHT, -1.90),
+		"rotation_degrees": Vector3(-4.0, 35.0, 0.0)
 	},
 	ViewPreset.HOLO_TERMINAL: {
-		"position": Vector3(4.0, EYE_HEIGHT, 1.7),
-		"rotation_degrees": Vector3(-2.0, -48.0, 0.0)
+		"position": Vector3(2.80, EYE_HEIGHT, -1.90),
+		"rotation_degrees": Vector3(-2.0, -55.0, 0.0)
 	},
 	ViewPreset.HASHRATE_WAVE: {
-		"position": Vector3(2.2, EYE_HEIGHT, -1.0),
-		"rotation_degrees": Vector3(-4.0, -28.0, 0.0)
+		"position": Vector3(0.0, EYE_HEIGHT, -2.90),
+		"rotation_degrees": Vector3(-4.0, 0.0, 0.0)
 	},
 	ViewPreset.WIDE_OVERVIEW: {
-		"position": Vector3(0.0, 4.8, 11.0),
-		"rotation_degrees": Vector3(-18.0, 0.0, 0.0)
+		"position": Vector3(0.0, 5.2, 9.8),
+		"rotation_degrees": Vector3(-20.0, 0.0, 0.0)
 	}
 }
 
 # First-Person realistic centered terminal position (ergonomic ~30% zoom approach)
-const FP_TERMINAL_POS = Vector3(4.20, 1.40, 1.50)
-const FP_TERMINAL_ROT = Vector3(-1.0, -48.0, 0.0)
-const FULLSCREEN_TERMINAL_POS = Vector3(4.35, 1.40, 1.37)
+const FP_TERMINAL_POS = Vector3(3.05, 1.40, -2.14)
+const FP_TERMINAL_ROT = Vector3(-1.0, -55.0, 0.0)
+const FULLSCREEN_TERMINAL_POS = Vector3(3.20, 1.40, -2.25)
 const FULLSCREEN_FOV = 66.0
 const DEFAULT_FOV = 68.0
 
