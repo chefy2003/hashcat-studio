@@ -19,6 +19,34 @@ var _max_recorded_rate: float = 50.0
 func _ready() -> void:
 	_init_data_arrays()
 	_setup_multimesh()
+	_setup_collision()
+
+func _setup_collision() -> void:
+	var body = StaticBody3D.new()
+	body.name = "WaveStaticBody"
+	var span_rad: float = deg_to_rad(arc_angle_span_deg)
+	var segment_count = 6
+	var arc_len = arc_radius * span_rad
+	var seg_w = (arc_len / float(segment_count)) * 1.05
+
+	for k in range(segment_count):
+		var factor = (float(k) / float(segment_count - 1)) - 0.5
+		var theta = factor * span_rad
+		var col = CollisionShape3D.new()
+		var box = BoxShape3D.new()
+		box.size = Vector3(seg_w, max_height, 0.28)
+		col.shape = box
+		if is_curved:
+			var x = arc_radius * sin(theta)
+			var z = arc_radius * (1.0 - cos(theta))
+			col.position = Vector3(x, max_height * 0.5, z)
+			col.rotation_degrees.y = -rad_to_deg(theta)
+		else:
+			var x = factor * (float(sample_count) * bar_spacing)
+			col.position = Vector3(x, max_height * 0.5, 0.0)
+		body.add_child(col)
+
+	add_child(body)
 
 func add_sample(rate_mhs: float) -> void:
 	if rate_mhs > _max_recorded_rate:

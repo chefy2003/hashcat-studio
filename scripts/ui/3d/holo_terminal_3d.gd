@@ -288,6 +288,18 @@ func _build_hologram_projector_and_frame() -> void:
 	puck_base.position.y = 0.025
 	puck_root.add_child(puck_base)
 
+	# Physical solid collision body for Projector Puck
+	var puck_body = StaticBody3D.new()
+	puck_body.name = "PuckStaticBody"
+	var col_shape = CollisionShape3D.new()
+	var cyl_shape = CylinderShape3D.new()
+	cyl_shape.radius = 0.52
+	cyl_shape.height = 0.4
+	col_shape.shape = cyl_shape
+	col_shape.position = Vector3(0.0, 0.2, 0.0)
+	puck_body.add_child(col_shape)
+	puck_root.add_child(puck_body)
+
 	# Glowing inner projector emitter lens
 	var puck_core = MeshInstance3D.new()
 	var core_cyl = CylinderMesh.new()

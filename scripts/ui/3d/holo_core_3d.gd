@@ -133,6 +133,18 @@ func _build_pedestal() -> void:
 	base.material_override = base_mat
 	add_child(base)
 
+	# Physical solid collision body for Quantum Core & Pedestal
+	var core_body = StaticBody3D.new()
+	core_body.name = "CoreStaticBody"
+	var col_shape = CollisionShape3D.new()
+	var cyl_shape = CylinderShape3D.new()
+	cyl_shape.radius = 1.35
+	cyl_shape.height = 2.4
+	col_shape.shape = cyl_shape
+	col_shape.position = Vector3(0.0, 1.2, 0.0)
+	core_body.add_child(col_shape)
+	add_child(core_body)
+
 	# Glowing emitter bezel ring on platform
 	var bezel = MeshInstance3D.new()
 	var torus = TorusMesh.new()

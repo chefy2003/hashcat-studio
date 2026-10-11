@@ -31,6 +31,17 @@ func _build_pillar() -> void:
 	main_col.material_override = dark_mat
 	add_child(main_col)
 
+	# Physical solid collision body for Bulkhead Column
+	var body = StaticBody3D.new()
+	body.name = "BulkheadStaticBody"
+	var col = CollisionShape3D.new()
+	var col_box = BoxShape3D.new()
+	col_box.size = Vector3(0.55, pillar_height, 0.45)
+	col.shape = col_box
+	col.position = Vector3(0.0, pillar_height * 0.5, 0.0)
+	body.add_child(col)
+	add_child(body)
+
 	# Slanted cantilever / roof arch brace
 	var brace = MeshInstance3D.new()
 	var b_box = BoxMesh.new()

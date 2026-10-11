@@ -174,3 +174,14 @@ func _build_cabinet_chassis(center_y: float, height: float, bottom_y: float, top
 	_interior_light.omni_range = 3.6
 	_interior_light.position = Vector3(0.0, center_y, 0.35)
 	add_child(_interior_light)
+
+	# Physical solid collision body for Server Rack Chassis
+	var rack_body = StaticBody3D.new()
+	rack_body.name = "RackStaticBody"
+	var col_shape = CollisionShape3D.new()
+	var box_shape = BoxShape3D.new()
+	box_shape.size = Vector3(2.5, height, 0.85)
+	col_shape.shape = box_shape
+	col_shape.position = Vector3(0.0, center_y, 0.0)
+	rack_body.add_child(col_shape)
+	add_child(rack_body)

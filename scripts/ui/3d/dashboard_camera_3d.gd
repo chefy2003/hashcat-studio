@@ -23,6 +23,8 @@ enum CameraMode {
 @export var move_speed: float = 4.5
 @export var sprint_multiplier: float = 2.2
 @export var crouch_multiplier: float = 0.55
+@export var player_collision_radius: float = 0.35
+@export var player_collision_height: float = 1.5
 
 var current_preset: ViewPreset = ViewPreset.OPERATOR_FRONT
 var camera_mode: CameraMode = CameraMode.FREE_FLIGHT
@@ -226,8 +228,9 @@ func _process(delta: float) -> void:
 			current_preset = ViewPreset.OPERATOR_FRONT
 
 		var move_step: Vector3 = input_dir.normalized() * current_speed * delta
-		global_position.x += move_step.x
-		global_position.z += move_step.z
+		var resolved_step: Vector3 = _move_with_collision(move_step)
+		global_position.x += resolved_step.x
+		global_position.z += resolved_step.z
 		_step_timer += delta * (10.0 if not Input.is_key_pressed(KEY_SHIFT) else 14.0)
 	else:
 		_step_timer = lerpf(_step_timer, 0.0, delta * 8.0)
@@ -240,6 +243,63 @@ func _process(delta: float) -> void:
 	if current_preset != ViewPreset.WIDE_OVERVIEW:
 		var bob_offset: float = (sin(_step_timer) * 0.022) if (not _is_jumping) else 0.0
 		global_position.y = _current_base_height + _jump_offset + bob_offset
+
+func _move_with_collision(motion: Vector3) -> Vector3:
+	var world_3d = get_world_3d()
+	if not world_3d:
+		return motion
+	var space_state = world_3d.direct_space_state
+	if not space_state:
+		return motion
+
+	var query = PhysicsShapeQueryParameters3D.new()
+	var capsule = CapsuleShape3D.new()
+	capsule.radius = player_collision_radius
+	capsule.height = player_collision_height
+	query.shape = capsule
+	query.collision_mask = 1 # Collides with all StaticBody3D objects on layer 1
+
+	# Center query capsule on player body below camera eye level
+	var body_center = global_position + Vector3(0.0, -player_collision_height * 0.45, 0.0)
+	query.transform = Transform3D(Basis(), body_center)
+	query.motion = motion
+
+	var res = space_state.cast_motion(query)
+	if res.is_empty():
+		return motion
+
+	var safe_fraction: float = res[0]
+	var safe_step: Vector3 = motion * safe_fraction
+
+	# If no obstacle or tiny motion, return directly
+	if safe_fraction >= 0.999 or motion.length_squared() < 0.0001:
+		return safe_step
+
+	# Obstacle encountered: calculate sliding along obstacle surface normal
+	var remaining_motion: Vector3 = motion * (1.0 - safe_fraction)
+	var unsafe_pos: Vector3 = body_center + (motion * res[1])
+
+	var normal: Vector3 = -motion.normalized()
+	var ray = PhysicsRayQueryParameters3D.new()
+	ray.from = unsafe_pos - motion.normalized() * 0.15
+	ray.to = unsafe_pos + motion.normalized() * 0.35
+	ray.collision_mask = 1
+	var ray_hit = space_state.intersect_ray(ray)
+	if not ray_hit.is_empty() and ray_hit.has("normal"):
+		normal = ray_hit["normal"]
+
+	normal.y = 0.0 # Slide along horizontal floor plane
+	if normal.length_squared() > 0.001:
+		normal = normal.normalized()
+		var slide_vector: Vector3 = remaining_motion.slide(normal)
+		if slide_vector.length_squared() > 0.0001:
+			query.transform.origin = body_center + safe_step
+			query.motion = slide_vector
+			var slide_res = space_state.cast_motion(query)
+			if not slide_res.is_empty():
+				safe_step += slide_vector * slide_res[0]
+
+	return safe_step
 
 func _unhandled_input(event: InputEvent) -> void:
 	# If in Terminal Focus, allow ESC to exit focus
