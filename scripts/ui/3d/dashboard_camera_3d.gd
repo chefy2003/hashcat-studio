@@ -22,12 +22,22 @@ enum CameraMode {
 
 @export var move_speed: float = 4.5
 @export var sprint_multiplier: float = 2.2
+@export var crouch_multiplier: float = 0.55
 
 var current_preset: ViewPreset = ViewPreset.OPERATOR_FRONT
 var camera_mode: CameraMode = CameraMode.FREE_FLIGHT
 var is_terminal_fullscreen: bool = false
 
 const EYE_HEIGHT: float = 1.72
+const CROUCH_HEIGHT: float = 1.05
+const JUMP_VELOCITY: float = 4.2
+const GRAVITY: float = 13.5
+
+var _current_base_height: float = EYE_HEIGHT
+var _vertical_velocity: float = 0.0
+var _jump_offset: float = 0.0
+var _is_jumping: bool = false
+var _is_crouching: bool = false
 
 var _preset_transforms: Dictionary = {
 	ViewPreset.OPERATOR_FRONT: {
@@ -74,6 +84,10 @@ func enter_terminal_focus(duration: float = 0.5) -> void:
 	camera_mode = CameraMode.TERMINAL_FOCUS
 	_is_orbiting = false
 	is_terminal_fullscreen = false
+	_is_jumping = false
+	_vertical_velocity = 0.0
+	_jump_offset = 0.0
+	_current_base_height = EYE_HEIGHT
 
 	# Save pre-focus state to return smoothly later
 	_pre_focus_pos = position
@@ -109,6 +123,10 @@ func exit_terminal_focus(duration: float = 0.5) -> void:
 	camera_mode = CameraMode.FREE_FLIGHT
 	is_terminal_fullscreen = false
 	_is_orbiting = false
+	_is_jumping = false
+	_vertical_velocity = 0.0
+	_jump_offset = 0.0
+	_current_base_height = EYE_HEIGHT
 
 	if _tween and _tween.is_valid():
 		_tween.kill()
@@ -127,6 +145,11 @@ func switch_preset(preset: ViewPreset, duration: float = 0.6) -> void:
 	if camera_mode == CameraMode.TERMINAL_FOCUS:
 		camera_mode = CameraMode.FREE_FLIGHT
 		terminal_focus_changed.emit(false)
+
+	_is_jumping = false
+	_vertical_velocity = 0.0
+	_jump_offset = 0.0
+	_current_base_height = EYE_HEIGHT
 
 	current_preset = preset
 	var target = _preset_transforms.get(preset, _preset_transforms[ViewPreset.OPERATOR_FRONT])
@@ -154,6 +177,27 @@ func _process(delta: float) -> void:
 	if _tween and _tween.is_valid():
 		return
 
+	# Handle Crouch input (CTRL)
+	_is_crouching = Input.is_key_pressed(KEY_CTRL)
+	var target_base_height: float = CROUCH_HEIGHT if _is_crouching else EYE_HEIGHT
+	_current_base_height = lerpf(_current_base_height, target_base_height, delta * 12.0)
+
+	# Handle Jump input (SPACE) - only if grounded and not crouching
+	if Input.is_key_pressed(KEY_SPACE) and not _is_jumping and not _is_crouching and _jump_offset <= 0.001:
+		_is_jumping = true
+		_vertical_velocity = JUMP_VELOCITY
+		if current_preset == ViewPreset.WIDE_OVERVIEW:
+			current_preset = ViewPreset.OPERATOR_FRONT
+
+	# Jump physics (gravity & vertical arc)
+	if _is_jumping:
+		_vertical_velocity -= GRAVITY * delta
+		_jump_offset += _vertical_velocity * delta
+		if _jump_offset <= 0.0:
+			_jump_offset = 0.0
+			_vertical_velocity = 0.0
+			_is_jumping = false
+
 	# First-Person Grounded Walking Navigation (XZ Floor Plane only - No flying/diving)
 	var yaw_rad: float = deg_to_rad(rotation_degrees.y)
 	var forward: Vector3 = Vector3(-sin(yaw_rad), 0.0, -cos(yaw_rad)).normalized()
@@ -171,7 +215,9 @@ func _process(delta: float) -> void:
 
 	var is_moving: bool = input_dir.length_squared() > 0.001
 	var current_speed: float = move_speed
-	if Input.is_key_pressed(KEY_SHIFT):
+	if _is_crouching:
+		current_speed *= crouch_multiplier
+	elif Input.is_key_pressed(KEY_SHIFT):
 		current_speed *= sprint_multiplier
 
 	if is_moving:
@@ -190,10 +236,10 @@ func _process(delta: float) -> void:
 	global_position.x = clampf(global_position.x, -8.5, 8.5)
 	global_position.z = clampf(global_position.z, -5.5, 8.5)
 
-	# Enforce human eye height with organic subtle walking head bob (only on deck)
+	# Enforce human eye height + crouch + jump + organic subtle walking head bob (only on deck)
 	if current_preset != ViewPreset.WIDE_OVERVIEW:
-		var bob_offset: float = sin(_step_timer) * 0.022
-		global_position.y = lerpf(global_position.y, EYE_HEIGHT + bob_offset, delta * 14.0)
+		var bob_offset: float = (sin(_step_timer) * 0.022) if (not _is_jumping) else 0.0
+		global_position.y = _current_base_height + _jump_offset + bob_offset
 
 func _unhandled_input(event: InputEvent) -> void:
 	# If in Terminal Focus, allow ESC to exit focus
@@ -203,6 +249,17 @@ func _unhandled_input(event: InputEvent) -> void:
 				exit_terminal_focus()
 				get_viewport().set_input_as_handled()
 		return
+
+	# Single-tap Jump trigger via Space
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_SPACE:
+			if not _is_jumping and not _is_crouching and _jump_offset <= 0.001:
+				_is_jumping = true
+				_vertical_velocity = JUMP_VELOCITY
+				if current_preset == ViewPreset.WIDE_OVERVIEW:
+					current_preset = ViewPreset.OPERATOR_FRONT
+				get_viewport().set_input_as_handled()
+				return
 
 	# Quick Preset Hotkeys: 1/F1, 2/F2, 3/F3, 4/F4, 5/F5
 	if event is InputEventKey and event.pressed:
