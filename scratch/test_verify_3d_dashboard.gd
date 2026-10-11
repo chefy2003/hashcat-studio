@@ -35,12 +35,13 @@ func _run_verification() -> void:
 	holo.set_core_telemetry(240.0, "HYBRID COMPUTING")
 	print("[PASS] HoloCore3D in center verified")
 
-	# 4. Verify ServerRack3D (Left side, distance x2)
+	# 4. Verify ServerRack3D (Left side, safe distance away from core)
 	var rack = inst.find_child("ServerRack3D", true, false)
 	assert(rack != null, "ServerRack3D not found")
 	print("[PASS] ServerRack3D initialized with units count: ", rack.get_units().size())
 	assert(rack.get_units().size() == 5, "Expected 5 compute units in rack")
-	assert(rack.position.x <= -1.8, "ServerRack3D must be placed on the left side")
+	assert(rack.position.x <= -3.0, "ServerRack3D must be backed away safely from core (x <= -3.0)")
+	print("[PASS] ServerRack3D safe distance verified at position: ", rack.position)
 
 	# 5. Verify HoloTerminal3D (Right side, in-world terminal)
 	var term = inst.find_child("HoloTerminal3D", true, false)
@@ -54,11 +55,11 @@ func _run_verification() -> void:
 	vis.add_sample(180.0)
 	print("[PASS] HashrateVisualizer3D verified at position: ", vis.position)
 
-	# 7. Test WASD Camera simulation
-	var prev_pos = cam.global_position
-	# Simulate process with move input
+	# 7. Test First-Person Grounded Walking Camera
+	assert(is_equal_approx(cam.position.y, 1.72) or abs(cam.position.y - 1.72) < 0.1, "Camera must start at human eye height (1.72m)")
 	cam._process(0.1)
-	print("[PASS] Camera _process executed successfully")
+	assert(abs(cam.position.y - 1.72) < 0.1, "Camera Y position must remain locked at eye height during walking simulation")
+	print("[PASS] Camera first-person grounded walking verified at eye height: ", cam.position.y)
 
 	# 8. Test Presets
 	cam.switch_preset(DashboardCamera3DScript.ViewPreset.HOLO_TERMINAL, 0.0)
