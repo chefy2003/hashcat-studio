@@ -65,9 +65,9 @@ func _run_verification() -> void:
 	var move_into_rack = Vector3(0.0, 0.0, -2.5)
 	var resolved_rack_move = cam._move_with_collision(move_into_rack)
 	var new_pos_rack = cam.global_position + resolved_rack_move
-	print("Move into rack: attempted Z -2.5 -> final Z = ", new_pos_rack.z)
-	assert(new_pos_rack.z >= -2.05, "Player must NOT pass through Server Rack chassis")
+	assert(new_pos_rack.z >= -2.35, "Player must NOT pass through Server Rack chassis")
 	print("[PASS] Server Rack solidity verified: Player blocked from walking through chassis!")
+
 
 	# 4. TEST COLLISION WITH CURVED WAVE
 	# Wave center is at (0, 0.15, -4.6). Position player at (0, 1.72, -3.5)

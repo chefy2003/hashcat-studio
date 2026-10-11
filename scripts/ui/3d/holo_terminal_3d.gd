@@ -186,9 +186,9 @@ func _build_terminal() -> void:
 		)
 	if screen_body.has_signal("panel_clicked_in_free_mode"):
 		screen_body.connect("panel_clicked_in_free_mode", func():
-			if is_player_in_range or is_hovered:
-				terminal_activated.emit()
+			terminal_activated.emit()
 		)
+
 
 	var shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()

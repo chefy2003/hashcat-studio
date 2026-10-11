@@ -133,9 +133,23 @@ func _build_pedestal() -> void:
 	base.material_override = base_mat
 	add_child(base)
 
-	# Physical solid collision body for Quantum Core & Pedestal
-	var core_body = StaticBody3D.new()
+	# Physical solid collision body for Quantum Core & Pedestal with Interactable3D
+	var interactable_script = preload("res://scripts/ui/3d/interactable_3d.gd")
+	var core_body = interactable_script.new()
 	core_body.name = "CoreStaticBody"
+	core_body.prompt_message = "Квантово Ядро: Овърклок статус"
+	core_body.focused.connect(func():
+		if _core_light:
+			_core_light.light_energy = 2.4
+	)
+	core_body.unfocused.connect(func():
+		if _core_light:
+			_core_light.light_energy = 1.45
+	)
+	core_body.interacted.connect(func(_actor: Node3D):
+		pulse_core()
+	)
+
 	var col_shape = CollisionShape3D.new()
 	var cyl_shape = CylinderShape3D.new()
 	cyl_shape.radius = 1.35
@@ -144,6 +158,7 @@ func _build_pedestal() -> void:
 	col_shape.position = Vector3(0.0, 1.2, 0.0)
 	core_body.add_child(col_shape)
 	add_child(core_body)
+
 
 	# Glowing emitter bezel ring on platform
 	var bezel = MeshInstance3D.new()

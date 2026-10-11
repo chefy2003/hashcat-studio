@@ -22,8 +22,14 @@ func _ready() -> void:
 	_setup_collision()
 
 func _setup_collision() -> void:
-	var body = StaticBody3D.new()
+	var interactable_script = preload("res://scripts/ui/3d/interactable_3d.gd")
+	var body = interactable_script.new()
 	body.name = "WaveStaticBody"
+	body.prompt_message = "Хешрейт Масив: Мониторинг на вълната"
+	body.interacted.connect(func(_actor: Node3D):
+		pulse_wave()
+	)
+
 	var span_rad: float = deg_to_rad(arc_angle_span_deg)
 	var segment_count = 6
 	var arc_len = arc_radius * span_rad
@@ -47,6 +53,11 @@ func _setup_collision() -> void:
 		body.add_child(col)
 
 	add_child(body)
+
+func pulse_wave() -> void:
+	for i in range(sample_count):
+		_target_heights[i] = min(_target_heights[i] + randf_range(0.3, 0.7), max_height)
+
 
 func add_sample(rate_mhs: float) -> void:
 	if rate_mhs > _max_recorded_rate:

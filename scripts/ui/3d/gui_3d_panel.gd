@@ -1,9 +1,9 @@
 class_name Gui3DPanel
-extends StaticBody3D
+extends Interactable3D
 
 ## Reusable 3D Raycast Transfer Component for Interactive SubViewport GUI Panels.
-## Projects camera 3D raycast collision points to 2D SubViewport UV coordinates
-## and forwards mouse clicks, motion, and scrolling into the 2D Control tree.
+## Extends Interactable3D so it integrates directly with the player's RayCast3D,
+## responds to [E] key interaction, and projects cursor coordinates to SubViewport 2D UI.
 
 signal hover_state_changed(is_hovered: bool)
 signal panel_clicked_in_free_mode()
@@ -16,6 +16,7 @@ var is_mouse_inside: bool = false
 var last_mouse_pos_2d: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
+	prompt_message = "Влез в терминала"
 	mouse_exited.connect(_on_mouse_exited)
 	if not mesh_instance and get_parent() is MeshInstance3D:
 		mesh_instance = get_parent() as MeshInstance3D
@@ -27,6 +28,18 @@ func _ready() -> void:
 				target_viewport = vp
 				break
 			p = p.get_parent()
+
+func interact(actor: Node3D) -> void:
+	panel_clicked_in_free_mode.emit()
+	super.interact(actor)
+
+func on_focus_entered() -> void:
+	hover_state_changed.emit(true)
+	super.on_focus_entered()
+
+func on_focus_exited() -> void:
+	hover_state_changed.emit(false)
+	super.on_focus_exited()
 
 func _input_event(_camera: Camera3D, event: InputEvent, event_position: Vector3, _normal: Vector3, _shape_idx: int) -> void:
 	if not target_viewport or not mesh_instance:
@@ -51,7 +64,7 @@ func _input_event(_camera: Camera3D, event: InputEvent, event_position: Vector3,
 		is_mouse_inside = true
 		hover_state_changed.emit(true)
 
-	# When interaction is disabled (Free-Flight mode), do NOT push clicks to the UI!
+	# When interaction is disabled (Free-Flight mode), clicking the panel activates focus
 	if not is_interaction_enabled:
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			panel_clicked_in_free_mode.emit()
@@ -79,4 +92,3 @@ func _on_mouse_exited() -> void:
 			var exit_event = InputEventMouseMotion.new()
 			exit_event.position = Vector2(-1000, -1000)
 			target_viewport.push_input(exit_event)
-
