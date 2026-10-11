@@ -33,8 +33,8 @@ var _preset_transforms: Dictionary = {
 		"rotation_degrees": Vector3(-6.0, 0.0, 0.0)
 	},
 	ViewPreset.RACK_TELEMETRY: {
-		"position": Vector3(-3.8, 1.35, 1.3),
-		"rotation_degrees": Vector3(-2.0, 42.0, 0.0)
+		"position": Vector3(-1.56, 1.35, -0.61),
+		"rotation_degrees": Vector3(-2.0, 32.0, 0.0)
 	},
 	ViewPreset.HOLO_TERMINAL: {
 		"position": Vector3(4.0, 1.35, 1.7),

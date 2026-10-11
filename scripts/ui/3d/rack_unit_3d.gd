@@ -63,11 +63,30 @@ func _update_label_text() -> void:
 			_lbl_telemetry.text = "%s  |  %.0f°C  |  FAN %.0f%%  |  LOAD %.0f%%" % [device_name, current_temp, current_fan_percent, current_util_percent]
 			_lbl_telemetry.modulate = Color("#e2e8f0")
 		else:
-			_lbl_telemetry.text = "[%s - ИЗКЛЮЧЕНО / STANDBY]" % device_name
-			_lbl_telemetry.modulate = Color("#64748b")
+			_lbl_telemetry.text = "[%s  •  ИЗКЛЮЧЕНО / STANDBY]" % device_name
+			_lbl_telemetry.modulate = Color("#ef4444")
 
 func _process(delta: float) -> void:
 	if not is_enabled:
+		# Pulsing red warning light animation when unit is turned off
+		var pulse: float = (sin(Time.get_ticks_msec() * 0.005 + float(device_id) * 0.7) * 0.5 + 0.5)
+		var red_color: Color = Color("#ff1744")
+
+		if _led_material:
+			_led_material.albedo_color = red_color.darkened(0.3)
+			_led_material.emission_enabled = true
+			_led_material.emission = red_color
+			_led_material.emission_energy_multiplier = 0.5 + pulse * 2.2
+
+		if _status_material:
+			_status_material.albedo_color = red_color
+			_status_material.emission_enabled = true
+			_status_material.emission = red_color
+			_status_material.emission_energy_multiplier = 0.7 + pulse * 2.4
+
+		if _lbl_telemetry:
+			_lbl_telemetry.modulate = Color("#ef4444").lerp(Color("#fca5a5"), pulse * 0.5)
+
 		return # Fans completely stopped when disabled
 
 	# Rotate fans dynamically based on fan percentage
@@ -84,10 +103,15 @@ func _update_leds() -> void:
 		return
 
 	if not is_enabled:
-		_led_material.albedo_color = Color("#151d28") # Dark unpowered acrylic
-		_led_material.emission_enabled = false
-		_status_material.albedo_color = Color("#1e293b")
-		_status_material.emission_enabled = false
+		var red_color: Color = Color("#ff1744")
+		_led_material.albedo_color = red_color.darkened(0.3)
+		_led_material.emission_enabled = true
+		_led_material.emission = red_color
+		_led_material.emission_energy_multiplier = 1.2
+		_status_material.albedo_color = red_color
+		_status_material.emission_enabled = true
+		_status_material.emission = red_color
+		_status_material.emission_energy_multiplier = 1.5
 		return
 
 	# Color scale: Emerald (<55C) -> Amber (55-72C) -> Crimson (>72C)

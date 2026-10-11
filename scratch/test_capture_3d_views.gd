@@ -73,10 +73,23 @@ func _capture_views() -> void:
 	img_term.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_holo_terminal.png")
 	print("Saved verify_3d_holo_terminal.png")
 
-	# 5. Capture Wide Panoramic Cockpit Architecture (Bulkheads, Conduits, Arena)
+	# 5. Capture Server Rack Telemetry & Red Pulsing Offline Light
+	var rack_node = scene.find_child("ServerRack3D", true, false)
+	if rack_node:
+		# Toggle off GPU #3 and GPU #4 to demonstrate red pulsing standby warning
+		rack_node.set_device_enabled(3, false)
+		rack_node.set_device_enabled(4, false)
 	cam.exit_terminal_focus(0.0)
 	if term_node:
 		term_node.set_focused(false)
+	cam.switch_preset(DashboardCamera3DScript.ViewPreset.RACK_TELEMETRY, 0.0)
+	for i in range(16):
+		await process_frame
+	var img_rack = win.get_texture().get_image()
+	img_rack.save_png("/home/deliriumxs/.gemini/antigravity/brain/badeab8c-b4e7-4a09-ac7b-8b0b445992d6/verify_3d_rack_telemetry.png")
+	print("Saved verify_3d_rack_telemetry.png")
+
+	# 6. Capture Wide Panoramic Cockpit Architecture (Bulkheads, Conduits, Arena)
 	cam.switch_preset(DashboardCamera3DScript.ViewPreset.WIDE_OVERVIEW, 0.0)
 	for i in range(16):
 		await process_frame

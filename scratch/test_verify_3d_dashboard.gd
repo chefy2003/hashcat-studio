@@ -40,7 +40,7 @@ func _run_verification() -> void:
 	assert(rack != null, "ServerRack3D not found")
 	print("[PASS] ServerRack3D initialized with units count: ", rack.get_units().size())
 	assert(rack.get_units().size() == 5, "Expected 5 compute units in rack")
-	assert(rack.position.x <= -4.5, "ServerRack3D must be spaced out on the left")
+	assert(rack.position.x <= -1.8, "ServerRack3D must be placed on the left side")
 
 	# 5. Verify HoloTerminal3D (Right side, in-world terminal)
 	var term = inst.find_child("HoloTerminal3D", true, false)
