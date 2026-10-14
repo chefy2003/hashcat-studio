@@ -28,16 +28,18 @@ func _process(delta: float) -> void:
 		if _burst_timer <= 0.0:
 			_is_bursting = false
 
-	var target_activity: float = 0.0
+	var mode: int = 0
+	var speed: float = 4.0
 	if _is_bursting:
-		target_activity = 1.0
+		mode = 1
+		speed = 10.0
 	elif _is_streaming:
-		target_activity = 2.0
-
-	_current_activity = lerp(_current_activity, target_activity, delta * 5.0)
+		mode = 2
+		speed = 14.0
 
 	if _shader_material:
-		_shader_material.set_shader_parameter("activity_level", _current_activity)
+		_shader_material.set_shader_parameter("bus_mode", mode)
+		_shader_material.set_shader_parameter("transfer_speed", speed)
 
 func trigger_file_burst(duration: float = 2.8) -> void:
 	_is_bursting = true
@@ -61,8 +63,9 @@ func _build_conduit() -> void:
 	if shader:
 		_shader_material = ShaderMaterial.new()
 		_shader_material.shader = shader
-		_shader_material.set_shader_parameter("packet_density", max(length * 2.2, 6.0))
-		_shader_material.set_shader_parameter("activity_level", 0.0)
+		_shader_material.set_shader_parameter("packet_density", clamp(length * 2.5, 6.0, 25.0))
+		_shader_material.set_shader_parameter("bus_mode", 0)
+		_shader_material.set_shader_parameter("transfer_speed", 4.0)
 		_mesh_instance.material_override = _shader_material
 
 	add_child(_mesh_instance)
