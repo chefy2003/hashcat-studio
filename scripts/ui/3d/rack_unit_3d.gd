@@ -26,7 +26,7 @@ var _status_led: MeshInstance3D
 var _led_material: StandardMaterial3D
 var _status_material: StandardMaterial3D
 var _lbl_telemetry: Label3D
-var _hit_area: Area3D
+var _interactable_body: Interactable3D
 
 func _ready() -> void:
 	_build_chassis_geometry()
@@ -34,21 +34,26 @@ func _ready() -> void:
 	_build_collision_area()
 	_update_leds()
 	_update_label_text()
+	_update_interactable_prompt()
 
 func setup_device(p_id: int, p_name: String, p_is_cpu: bool = false, p_enabled: bool = true) -> void:
 	device_id = p_id
 	device_name = p_name
 	is_cpu = p_is_cpu
 	is_enabled = p_enabled
+	if _interactable_body:
+		_interactable_body.name = "UnitInteractable_%d" % device_id
 	if is_cpu and _fan2_mesh:
 		_fan2_mesh.visible = false # Single fan for CPU cooler
 	_update_leds()
 	_update_label_text()
+	_update_interactable_prompt()
 
 func set_device_enabled(p_enabled: bool) -> void:
 	is_enabled = p_enabled
 	_update_leds()
 	_update_label_text()
+	_update_interactable_prompt()
 
 func set_telemetry(temp_celsius: float, fan_pct: float, util_pct: float) -> void:
 	current_temp = temp_celsius
@@ -70,19 +75,19 @@ func _process(delta: float) -> void:
 	if not is_enabled:
 		# Pulsing red warning light animation when unit is turned off
 		var pulse: float = (sin(Time.get_ticks_msec() * 0.005 + float(device_id) * 0.7) * 0.5 + 0.5)
-		var red_color: Color = Color("#ff1744")
+		var red_color: Color = Color("#dc2626")
 
 		if _led_material:
-			_led_material.albedo_color = red_color.darkened(0.3)
+			_led_material.albedo_color = red_color.darkened(0.4)
 			_led_material.emission_enabled = true
 			_led_material.emission = red_color
-			_led_material.emission_energy_multiplier = 0.5 + pulse * 2.2
+			_led_material.emission_energy_multiplier = 0.5 + pulse * 0.5
 
 		if _status_material:
 			_status_material.albedo_color = red_color
 			_status_material.emission_enabled = true
 			_status_material.emission = red_color
-			_status_material.emission_energy_multiplier = 0.7 + pulse * 2.4
+			_status_material.emission_energy_multiplier = 0.6 + pulse * 0.5
 
 		if _lbl_telemetry:
 			_lbl_telemetry.modulate = Color("#ef4444").lerp(Color("#fca5a5"), pulse * 0.5)
@@ -129,19 +134,19 @@ func _update_leds() -> void:
 	_led_material.albedo_color = led_color
 	_led_material.emission_enabled = true
 	_led_material.emission = led_color
-	_led_material.emission_energy_multiplier = 1.8
+	_led_material.emission_energy_multiplier = 2.8
 
 	# Activity status LED
 	_status_material.emission_enabled = true
 	if current_util_percent > 5.0:
 		_status_material.albedo_color = Color("#00f0ff")
 		_status_material.emission = Color("#00f0ff")
-		_status_material.emission_energy_multiplier = 1.8
+		_status_material.emission_energy_multiplier = 3.2
 	else:
 		var col = Color("#10b981") if is_cpu else Color("#00f0ff")
 		_status_material.albedo_color = col
 		_status_material.emission = col
-		_status_material.emission_energy_multiplier = 0.8
+		_status_material.emission_energy_multiplier = 1.6
 
 
 func _build_unit_label() -> void:
@@ -251,32 +256,55 @@ func _create_fan_mesh() -> MeshInstance3D:
 	return fan_root
 
 func _build_collision_area() -> void:
-	_hit_area = Area3D.new()
-	_hit_area.collision_layer = 1 # UI_Panels
-	_hit_area.collision_mask = 1
+	var interactable_script = preload("res://scripts/ui/3d/interactable_3d.gd")
+	_interactable_body = interactable_script.new()
+	_interactable_body.name = "UnitInteractable_%d" % device_id
+	_interactable_body.collision_layer = 1 # Physical solidity and RayCast3D interaction
+	_interactable_body.collision_mask = 1
+	_update_interactable_prompt()
 
 	var shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
-	box.size = Vector3(2.4, 0.38, 1.15)
+	# Front bezel plate: thin Z thickness (0.12) placed on front face (z=0.55)
+	# Ensures pinpoint raycast precision from any player standing height/angle
+	box.size = Vector3(2.35, 0.36, 0.12)
 	shape.shape = box
-	_hit_area.add_child(shape)
+	shape.position = Vector3(0.0, 0.0, 0.55)
+	_interactable_body.add_child(shape)
 
-	_hit_area.input_event.connect(_on_hit_area_input)
-	_hit_area.mouse_entered.connect(_on_mouse_hover_enter)
-	_hit_area.mouse_exited.connect(_on_mouse_hover_exit)
-	add_child(_hit_area)
+	_interactable_body.focused.connect(_on_mouse_hover_enter)
+	_interactable_body.unfocused.connect(_on_mouse_hover_exit)
+	_interactable_body.interacted.connect(func(_actor: Node3D):
+		toggle_device()
+	)
+	_interactable_body.input_event.connect(_on_interactable_input)
+	add_child(_interactable_body)
 
-func _on_hit_area_input(_camera: Camera3D, event: InputEvent, _position: Vector3, _normal: Vector3, _shape_idx: int) -> void:
+func _on_interactable_input(_camera: Camera3D, event: InputEvent, _position: Vector3, _normal: Vector3, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		set_device_enabled(not is_enabled)
-		unit_clicked.emit(device_id)
-		unit_toggled.emit(device_id, is_enabled)
+		toggle_device()
+
+func toggle_device() -> void:
+	set_device_enabled(not is_enabled)
+	unit_clicked.emit(device_id)
+	unit_toggled.emit(device_id, is_enabled)
+
+func _update_interactable_prompt() -> void:
+	if _interactable_body:
+		var action_text = "Изключи " if is_enabled else "Включи "
+		_interactable_body.prompt_message = action_text + device_name
+
+func get_prompt() -> String:
+	return ("Изключи " if is_enabled else "Включи ") + device_name
+
+func interact(_actor: Node3D = null) -> void:
+	toggle_device()
 
 func _on_mouse_hover_enter() -> void:
 	if _body_mat:
 		_body_mat.emission_enabled = true
 		_body_mat.emission = Color("#00a8ff")
-		_body_mat.emission_energy_multiplier = 0.25
+		_body_mat.emission_energy_multiplier = 0.4
 
 func _on_mouse_hover_exit() -> void:
 	if _body_mat:

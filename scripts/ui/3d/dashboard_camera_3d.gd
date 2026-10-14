@@ -53,12 +53,12 @@ var _preset_transforms: Dictionary = {
 		"rotation_degrees": Vector3(-6.0, 0.0, 0.0)
 	},
 	ViewPreset.RACK_TELEMETRY: {
-		"position": Vector3(-2.80, EYE_HEIGHT, -1.90),
-		"rotation_degrees": Vector3(-4.0, 35.0, 0.0)
+		"position": Vector3(-2.35, EYE_HEIGHT + 0.15, -1.25),
+		"rotation_degrees": Vector3(-8.0, 42.0, 0.0)
 	},
 	ViewPreset.HOLO_TERMINAL: {
-		"position": Vector3(2.80, EYE_HEIGHT, -1.90),
-		"rotation_degrees": Vector3(-2.0, -55.0, 0.0)
+		"position": Vector3(1.927, 1.37, -1.35),
+		"rotation_degrees": Vector3(-1.0, -55.0, 0.0)
 	},
 	ViewPreset.HASHRATE_WAVE: {
 		"position": Vector3(0.0, EYE_HEIGHT, -2.90),
@@ -70,12 +70,13 @@ var _preset_transforms: Dictionary = {
 	}
 }
 
-# First-Person realistic centered terminal position
-const FP_TERMINAL_POS = Vector3(3.05, 1.40, -2.14)
+# First-Person realistic centered terminal position framing both main & vertical companion screens
+const FP_TERMINAL_POS = Vector3(1.927, 1.37, -1.35)
 const FP_TERMINAL_ROT = Vector3(-1.0, -55.0, 0.0)
-const FULLSCREEN_TERMINAL_POS = Vector3(3.20, 1.40, -2.25)
-const FULLSCREEN_FOV = 66.0
-const DEFAULT_FOV = 68.0
+const FULLSCREEN_TERMINAL_POS = Vector3(2.255, 1.35, -1.58)
+const FULLSCREEN_TERMINAL_ROT = Vector3(0.0, -55.0, 0.0)
+const FULLSCREEN_FOV = 68.0
+const DEFAULT_FOV = 65.0
 
 var _pre_focus_pos: Vector3 = Vector3(0.0, EYE_HEIGHT, 5.8)
 var _pre_focus_rot: Vector3 = Vector3(-6.0, 0.0, 0.0)
@@ -218,6 +219,11 @@ func enter_terminal_focus(duration: float = 0.5) -> void:
 	_jump_offset = 0.0
 	_current_base_height = EYE_HEIGHT
 
+	# Disable player body collision while in terminal focus to avoid physics depenetration jitter
+	if _char_body and is_instance_valid(_char_body):
+		_char_body.collision_layer = 0
+		_char_body.collision_mask = 0
+
 	# Free cursor for terminal GUI interaction
 	set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	if _hud_layer:
@@ -248,9 +254,11 @@ func set_terminal_fullscreen(is_full: bool, duration: float = 0.4) -> void:
 	_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	if is_full:
 		_tween.tween_property(self, "position", FULLSCREEN_TERMINAL_POS, duration)
+		_tween.tween_property(self, "rotation_degrees", FULLSCREEN_TERMINAL_ROT, duration)
 		_tween.tween_property(self, "fov", FULLSCREEN_FOV, duration)
 	else:
 		_tween.tween_property(self, "position", FP_TERMINAL_POS, duration)
+		_tween.tween_property(self, "rotation_degrees", FP_TERMINAL_ROT, duration)
 		_tween.tween_property(self, "fov", DEFAULT_FOV, duration)
 
 func exit_terminal_focus(duration: float = 0.5) -> void:
@@ -260,6 +268,11 @@ func exit_terminal_focus(duration: float = 0.5) -> void:
 	_vertical_velocity = 0.0
 	_jump_offset = 0.0
 	_current_base_height = EYE_HEIGHT
+
+	# Re-enable player body collision
+	if _char_body and is_instance_valid(_char_body):
+		_char_body.collision_layer = 1
+		_char_body.collision_mask = 1
 
 	# Lock cursor again for FPS walking navigation
 	set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -457,13 +470,28 @@ func _move_with_collision(motion: Vector3) -> Vector3:
 			travel += slide_col.get_travel()
 	return travel
 
+var holo_terminal: Node3D = null
+
 func _unhandled_input(event: InputEvent) -> void:
-	# In Terminal Focus, allow ESC to exit focus and re-capture cursor
+	# In Terminal Focus, forward all keyboard and mouse wheel events directly to the terminal's SubViewport
 	if camera_mode == CameraMode.TERMINAL_FOCUS:
-		if event is InputEventKey and event.pressed:
-			if event.keycode == KEY_ESCAPE:
+		if event is InputEventKey:
+			if event.pressed and (event.keycode == KEY_ESCAPE or (event.keycode == KEY_E and not _is_terminal_text_field_focused())):
 				exit_terminal_focus()
 				get_viewport().set_input_as_handled()
+				return
+			if holo_terminal and holo_terminal.get("viewport") != null:
+				var term_vp = holo_terminal.get("viewport") as SubViewport
+				if term_vp:
+					term_vp.push_input(event)
+					get_viewport().set_input_as_handled()
+					return
+
+		# Direct mouse wheel routing to SubViewport (since Godot 3D physics picking does not pick wheel events)
+		if event is InputEventMouseButton and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT]:
+			if _forward_wheel_to_terminal(event):
+				get_viewport().set_input_as_handled()
+				return
 		return
 
 	# Re-capture mouse on left click if focus was lost in free flight
@@ -493,17 +521,80 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
 			KEY_ESCAPE:
+				if camera_mode == CameraMode.TERMINAL_FOCUS:
+					exit_terminal_focus()
+					get_viewport().set_input_as_handled()
+					return
 				set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+				var vp = get_viewport()
+				if vp:
+					vp.set_input_as_handled()
 				request_exit_3d.emit()
-				get_tree().change_scene_to_file("res://scenes/main_wizard.tscn")
 
 			KEY_1, KEY_F1:
 				switch_preset(ViewPreset.OPERATOR_FRONT)
 			KEY_2, KEY_F2:
 				switch_preset(ViewPreset.RACK_TELEMETRY)
 			KEY_3, KEY_F3:
-				switch_preset(ViewPreset.HOLO_TERMINAL)
+				enter_terminal_focus()
 			KEY_4, KEY_F4:
 				switch_preset(ViewPreset.HASHRATE_WAVE)
 			KEY_5, KEY_F5:
 				switch_preset(ViewPreset.WIDE_OVERVIEW)
+
+func _is_terminal_text_field_focused() -> bool:
+	if not holo_terminal:
+		return false
+	var vp = holo_terminal.get("viewport") as SubViewport
+	if vp:
+		var focus_owner = vp.gui_get_focus_owner()
+		if focus_owner is LineEdit or focus_owner is TextEdit:
+			return true
+	return false
+
+func _forward_wheel_to_terminal(event: InputEventMouseButton) -> bool:
+	if not holo_terminal:
+		return false
+	var screen_mesh = holo_terminal.get("screen_mesh") as MeshInstance3D
+	var vp = holo_terminal.get("viewport") as SubViewport
+	if not screen_mesh or not vp:
+		return false
+
+	var mouse_pos = get_viewport().get_mouse_position()
+	var ray_origin = project_ray_origin(mouse_pos)
+	var ray_dir = project_ray_normal(mouse_pos)
+	if not is_inside_tree() or not get_world_3d():
+		return false
+	var space_state = get_world_3d().direct_space_state
+	if not space_state:
+		return false
+	var query = PhysicsRayQueryParameters3D.create(ray_origin, ray_origin + ray_dir * 12.0)
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	query.collision_mask = 1 # UI_Panels
+	var hit = space_state.intersect_ray(query)
+
+	if not hit.is_empty():
+		var screen_body = holo_terminal.get("screen_body")
+		if hit.collider == screen_body or hit.collider.get_parent() == screen_mesh or hit.collider == screen_mesh:
+			var quad_mesh = screen_mesh.mesh as QuadMesh
+			var mesh_size = quad_mesh.size if quad_mesh else Vector2(2.5, 1.56)
+			var local_pos = screen_mesh.global_transform.affine_inverse() * hit.position
+			var raw_u = (local_pos.x / mesh_size.x) + 0.5
+			var raw_v = 0.5 - (local_pos.y / mesh_size.y)
+			var uv = Vector2(clampf(raw_u, 0.0, 1.0), clampf(raw_v, 0.0, 1.0))
+			var vp_pos = uv * Vector2(vp.size)
+
+			var motion = InputEventMouseMotion.new()
+			motion.position = vp_pos
+			motion.global_position = vp_pos
+			vp.push_input(motion)
+
+			var f_ev = event.duplicate() as InputEventMouseButton
+			f_ev.position = vp_pos
+			f_ev.global_position = vp_pos
+			f_ev.factor = 1.0 if f_ev.factor <= 0.001 else f_ev.factor
+			vp.push_input(f_ev)
+			return true
+
+	return false

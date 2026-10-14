@@ -22,13 +22,10 @@ func _ready() -> void:
 	_setup_collision()
 
 func _setup_collision() -> void:
-	var interactable_script = preload("res://scripts/ui/3d/interactable_3d.gd")
-	var body = interactable_script.new()
+	var body = StaticBody3D.new()
 	body.name = "WaveStaticBody"
-	body.prompt_message = "Хешрейт Масив: Мониторинг на вълната"
-	body.interacted.connect(func(_actor: Node3D):
-		pulse_wave()
-	)
+	body.collision_layer = 1
+	body.collision_mask = 1
 
 	var span_rad: float = deg_to_rad(arc_angle_span_deg)
 	var segment_count = 6

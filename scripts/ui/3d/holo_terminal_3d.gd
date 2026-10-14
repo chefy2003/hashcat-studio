@@ -57,6 +57,8 @@ func set_focused(focused: bool) -> void:
 	is_focused = focused
 	if screen_body:
 		screen_body.set("is_interaction_enabled", focused)
+	if not focused and terminal_ui and terminal_ui.has_method("reset_fullscreen_toggle"):
+		terminal_ui.reset_fullscreen_toggle()
 	_update_glow_and_prompt()
 
 func set_player_in_range(in_range: bool) -> void:
@@ -161,13 +163,29 @@ func _build_terminal() -> void:
 	quad.size = Vector2(2.5, 1.56)
 	screen_mesh.mesh = quad
 
-	var mat = StandardMaterial3D.new()
-	mat.albedo_texture = viewport.get_texture()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var holo_shader = preload("res://shaders/holo_diegetic_display.gdshader")
+	var mat = ShaderMaterial.new()
+	mat.shader = holo_shader
+	mat.set_shader_parameter("terminal_texture", viewport.get_texture())
+	mat.set_shader_parameter("border_color", Color("#00f0ff"))
+	mat.set_shader_parameter("border_thickness", 0.003)
+	mat.set_shader_parameter("brightness_boost", 1.15)
 	screen_mesh.material_override = mat
 	add_child(screen_mesh)
+
+	# Tactile physical dark anodized chassis backplate
+	var chassis_back = MeshInstance3D.new()
+	chassis_back.name = "ChassisBackplate"
+	var chassis_box = BoxMesh.new()
+	chassis_box.size = Vector3(2.55, 1.61, 0.04)
+	chassis_back.mesh = chassis_box
+	chassis_back.position = Vector3(0.0, 0.0, -0.025)
+	var chassis_mat = StandardMaterial3D.new()
+	chassis_mat.albedo_color = Color("#090e18")
+	chassis_mat.metallic = 0.92
+	chassis_mat.roughness = 0.28
+	chassis_back.material_override = chassis_mat
+	screen_mesh.add_child(chassis_back)
 
 	# 4. Interactive ScreenBody with Gui3DPanel raycast transfer
 	screen_body = StaticBody3D.new()
@@ -192,8 +210,9 @@ func _build_terminal() -> void:
 
 	var shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
-	box.size = Vector3(2.5, 1.56, 0.08)
+	box.size = Vector3(2.5, 1.56, 0.004)
 	shape.shape = box
+	shape.position = Vector3(0.0, 0.0, 0.002)
 	screen_body.add_child(shape)
 	screen_mesh.add_child(screen_body)
 
@@ -212,12 +231,15 @@ func _build_terminal() -> void:
 	# 6. Interaction Zone (Area3D)
 	_interaction_zone = Area3D.new()
 	_interaction_zone.name = "InteractionZone"
+	_interaction_zone.input_ray_pickable = false
+	_interaction_zone.collision_layer = 0
+	_interaction_zone.collision_mask = 1
 	var col_shape = CollisionShape3D.new()
 	var cyl_shape = CylinderShape3D.new()
-	cyl_shape.radius = 4.0
-	cyl_shape.height = 3.5
+	cyl_shape.radius = 2.4
+	cyl_shape.height = 2.0
 	col_shape.shape = cyl_shape
-	col_shape.position = Vector3(0.0, 0.0, 0.5)
+	col_shape.position = Vector3(0.0, 0.0, 0.3)
 	_interaction_zone.add_child(col_shape)
 	_interaction_zone.body_entered.connect(func(_b): set_player_in_range(true))
 	_interaction_zone.body_exited.connect(func(_b): set_player_in_range(false))
@@ -326,54 +348,18 @@ func _build_hologram_projector_and_frame() -> void:
 	puck_ring.position.y = 0.055
 	puck_root.add_child(puck_ring)
 
-	# 4. Volumetric Hologram Light Cone (Upward Projection Beam)
-	var beam = MeshInstance3D.new()
-	var cone = CylinderMesh.new()
-	cone.bottom_radius = 0.35 # At puck on floor
-	cone.top_radius = 1.30 # Expanding upward towards bottom of screen
-	cone.height = 1.25
-	beam.mesh = cone
-	var beam_mat = StandardMaterial3D.new()
-	beam_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	beam_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	beam_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	beam_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	beam_mat.albedo_color = Color(0.0, 0.92, 1.0, 0.08)
-	beam.material_override = beam_mat
-	beam.position = Vector3(0.0, -0.98, 0.22)
-	beam.rotation_degrees = Vector3(-18.0, 0.0, 0.0) # Angled from puck directly to screen
-	add_child(beam)
-
-	# 5. Upward Floating Sparkle Hologram Particles (CPUParticles3D)
-	var particles = CPUParticles3D.new()
-	particles.name = "HoloParticles"
-	particles.amount = 26
-	particles.lifetime = 1.8
-	particles.preprocess = 0.5
-	particles.emission_shape = CPUParticles3D.EMISSION_SHAPE_RING
-	particles.emission_ring_radius = 0.28
-	particles.emission_ring_inner_radius = 0.05
-	particles.emission_ring_height = 0.05
-	particles.direction = Vector3(0.0, 1.0, -0.32).normalized()
-	particles.spread = 18.0
-	particles.gravity = Vector3(0.0, 0.35, 0.0)
-	particles.initial_velocity_min = 0.8
-	particles.initial_velocity_max = 1.4
-	particles.scale_amount_min = 0.3
-	particles.scale_amount_max = 0.8
-	particles.position = Vector3(0.0, -1.28, 0.45)
-
-	var p_mesh = QuadMesh.new()
-	p_mesh.size = Vector2(0.02, 0.02)
-	particles.mesh = p_mesh
-	var p_mat = StandardMaterial3D.new()
-	p_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	p_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	p_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	p_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
-	p_mat.albedo_color = Color(0.0, 0.95, 1.0, 0.85)
-	particles.material_override = p_mat
-	add_child(particles)
+	# 4. Heavy Dark Anodized Articulating Console Mount Arm
+	var mount_arm = MeshInstance3D.new()
+	mount_arm.name = "TerminalMountArm"
+	var arm_cyl = CylinderMesh.new()
+	arm_cyl.top_radius = 0.08
+	arm_cyl.bottom_radius = 0.14
+	arm_cyl.height = 1.35
+	mount_arm.mesh = arm_cyl
+	mount_arm.material_override = dark_metal_mat
+	mount_arm.position = Vector3(0.0, -0.92, -0.06)
+	mount_arm.rotation_degrees = Vector3(-10.0, 0.0, 0.0) # Anchored securely into rear chassis backplate
+	add_child(mount_arm)
 
 	# 6. Secondary Auxiliary Hologram Screen on the Right (Concept Art Companion)
 	_build_auxiliary_screen(neon_mat)
@@ -452,30 +438,46 @@ func _build_auxiliary_screen(neon_mat: StandardMaterial3D) -> void:
 	_aux_console_log.text = "[color=#00f0ff]>>> QUANTUM TELEMETRY STREAM CONNECTED[/color]\n[color=#64748b][*] All 5 compute nodes synchronized.[/color]\n"
 	vbox.add_child(_aux_console_log)
 
-	# 3. 3D QuadMesh for Aux Screen (0.95m x 1.25m)
+	# 3. 3D QuadMesh for Aux Screen (0.85m x 1.40m curved cockpit companion)
 	aux_screen_mesh = MeshInstance3D.new()
 	aux_screen_mesh.name = "AuxScreenMesh"
 	var aux_quad = QuadMesh.new()
-	aux_quad.size = Vector2(0.95, 1.25)
+	aux_quad.size = Vector2(0.85, 1.40)
 	aux_screen_mesh.mesh = aux_quad
 
-	var aux_mat = StandardMaterial3D.new()
-	aux_mat.albedo_texture = aux_viewport.get_texture()
-	aux_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	aux_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	aux_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var holo_shader = preload("res://shaders/holo_diegetic_display.gdshader")
+	var aux_mat = ShaderMaterial.new()
+	aux_mat.shader = holo_shader
+	aux_mat.set_shader_parameter("terminal_texture", aux_viewport.get_texture())
+	aux_mat.set_shader_parameter("border_color", Color("#00f0ff"))
+	aux_mat.set_shader_parameter("border_thickness", 0.003)
+	aux_mat.set_shader_parameter("brightness_boost", 1.15)
 	aux_screen_mesh.material_override = aux_mat
 
-	# Angled floating position on the right of the main terminal
-	aux_screen_mesh.position = Vector3(1.70, -0.05, 0.15)
-	aux_screen_mesh.rotation_degrees = Vector3(0.0, -15.0, 0.0)
+	# Aux Screen Dark Metallic Chassis Backplate
+	var aux_chassis = MeshInstance3D.new()
+	aux_chassis.name = "AuxChassisBackplate"
+	var aux_box = BoxMesh.new()
+	aux_box.size = Vector3(0.88, 1.43, 0.03)
+	aux_chassis.mesh = aux_box
+	aux_chassis.position = Vector3(0.0, 0.0, -0.02)
+	var chassis_mat = StandardMaterial3D.new()
+	chassis_mat.albedo_color = Color("#090e18")
+	chassis_mat.metallic = 0.92
+	chassis_mat.roughness = 0.28
+	aux_chassis.material_override = chassis_mat
+	aux_screen_mesh.add_child(aux_chassis)
+
+	# Ergonomically curved wrap-around cockpit position on the right of the main terminal
+	aux_screen_mesh.position = Vector3(1.60, 0.0, 0.26)
+	aux_screen_mesh.rotation_degrees = Vector3(0.0, -36.0, 0.0)
 	add_child(aux_screen_mesh)
 
 	# Glowing neon top and bottom trim on aux screen
-	for y_off in [-0.63, 0.63]:
+	for y_off in [-0.70, 0.70]:
 		var a_trim = MeshInstance3D.new()
 		var a_box = BoxMesh.new()
-		a_box.size = Vector3(0.96, 0.012, 0.015)
+		a_box.size = Vector3(0.86, 0.012, 0.015)
 		a_trim.mesh = a_box
 		a_trim.material_override = neon_mat
 		a_trim.position = Vector3(0.0, y_off, 0.0)

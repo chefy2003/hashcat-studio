@@ -17,3 +17,10 @@ bin/
 .DS_Store
 *.tmp
 *.log
+scratch/
+test_*.py
+*.avi
+*.mp4
+__pycache__/
+*.pyc
+extension_api.json

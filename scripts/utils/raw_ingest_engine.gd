@@ -32,29 +32,50 @@ static func ingest_file(file_path: String, lang: String = "bg") -> Dictionary:
 	if ext in ["cap", "pcap", "pcapng"]:
 		return _convert_wifi_capture(file_path, hashes_dir, lang)
 
-	# 2. Ethereum UTC / Keystore JSON file
+	# 2. KeePass Database (.kdbx)
+	if ext == "kdbx":
+		return _convert_keepass(file_path, hashes_dir, lang)
+
+	# 3. RAR Archive (.rar)
+	if ext == "rar":
+		return _convert_rar(file_path, hashes_dir, lang)
+
+	# 4. Ethereum UTC / Keystore JSON file
 	if filename.begins_with("UTC--") or ext == "json":
 		if _is_ethereum_json(file_path):
 			return _convert_ethereum_keystore(file_path, hashes_dir, lang)
 
-	# 3. 7-Zip Archive (.7z)
+	# 5. 7-Zip Archive (.7z)
 	if ext == "7z":
 		return _convert_7z(file_path, hashes_dir, lang)
 
-	# 4. PDF Document (.pdf)
+	# 6. PDF Document (.pdf)
 	if ext == "pdf":
 		return _convert_pdf(file_path, hashes_dir, lang)
 
-	# 5. ZIP Archive (.zip)
+	# 7. ZIP Archive (.zip)
 	if ext == "zip":
 		return _convert_zip(file_path, hashes_dir, lang)
 
-	# 6. SSH Key (.key, id_rsa, id_ed25519)
+	# 8. SSH Key (.key, id_rsa, id_ed25519)
 	if filename.begins_with("id_") or ext in ["key", "pem"]:
 		if _is_ssh_private_key(file_path):
 			return _convert_ssh(file_path, hashes_dir, lang)
 
-	# 7. Check if file is already a text hash file (.hc22000, .hash, .txt)
+	# 9. Legacy Hashcat WPA Capture (.hccapx)
+	if ext == "hccapx":
+		return {
+			"success": true,
+			"format_label": "WPA-EAPOL (.hccapx)",
+			"target_hash_path": file_path,
+			"hash_mode": 2500,
+			"hash_mode_name": "WPA-EAPOL-PBKDF2",
+			"recommended_flags": "-O",
+			"metadata": {},
+			"summary_message": "📡 [WPA HCCAPX] Зареден legacy WPA capture файл за режим 2500!" if is_bg else "📡 [WPA HCCAPX] Loaded legacy capture for Mode 2500!"
+		}
+
+	# 10. Check if file is already a text hash file (.hc22000, .hash, .txt)
 	return _detect_plain_hash_file(file_path, lang)
 
 static func _is_ethereum_json(file_path: String) -> bool:
@@ -75,7 +96,14 @@ static func _is_ssh_private_key(file_path: String) -> bool:
 	return head.begins_with("-----BEGIN") and "PRIVATE KEY" in head
 
 static func _find_executable(cmd: String) -> String:
-	for candidate in ["/usr/bin/" + cmd, "/usr/local/bin/" + cmd, "/usr/sbin/" + cmd, cmd]:
+	if cmd.begins_with("/") and FileAccess.file_exists(cmd):
+		return cmd
+	if cmd == "ethereum2john":
+		if FileAccess.file_exists("/usr/share/john/ethereum2john.py"):
+			return "python3 /usr/share/john/ethereum2john.py"
+	for candidate in ["/usr/bin/" + cmd, "/usr/local/bin/" + cmd, "/usr/sbin/" + cmd, "/usr/share/john/" + cmd, cmd]:
+		if FileAccess.file_exists(candidate):
+			return candidate
 		var check_out: Array = []
 		if OS.execute("which", [candidate], check_out, false) == 0:
 			return candidate
@@ -148,6 +176,98 @@ static func _convert_wifi_capture(cap_path: String, hashes_dir: String, lang: St
 			"success": false,
 			"error": "Във файла %s не беше открит валиден WPA Handshake или PMKID!" % cap_path if is_bg else "No valid WPA Handshake or PMKID found in %s!" % cap_path
 		}
+
+static func _convert_keepass(kdbx_path: String, hashes_dir: String, lang: String) -> Dictionary:
+	var is_bg: bool = (lang == "bg")
+	var tool_bin: String = _find_executable("keepass2john")
+	if tool_bin.is_empty():
+		return {"success": false, "error": "Липсва keepass2john." if is_bg else "Missing keepass2john."}
+
+	var base_name: String = kdbx_path.get_file().get_basename()
+	var out_path: String = hashes_dir + "/" + base_name + ".hash"
+
+	var output: Array = []
+	OS.execute(tool_bin, [kdbx_path], output, true)
+	if output.is_empty():
+		return {"success": false, "error": "keepass2john не върна резултат." if is_bg else "keepass2john returned empty."}
+
+	var hash_str: String = ""
+	for l in str(output[0]).split("\n"):
+		l = l.strip_edges()
+		if "$keepass$" in l:
+			var idx: int = l.find("$keepass$")
+			hash_str = l.substr(idx).strip_edges()
+			break
+
+	if hash_str.is_empty():
+		return {"success": false, "error": "Базата данни не е криптирана или липсва хеш." if is_bg else "Database is not encrypted or hash missing."}
+
+	var f: FileAccess = FileAccess.open(out_path, FileAccess.WRITE)
+	if f != null:
+		f.store_string(hash_str + "\n")
+		f.close()
+
+	return {
+		"success": true,
+		"format_label": "KeePass Password Database (.kdbx)",
+		"target_hash_path": out_path,
+		"hash_mode": 13400,
+		"hash_mode_name": "KeePass 1 (AES/Twofish) / KeePass 2 (AES)",
+		"recommended_flags": "",
+		"metadata": {"raw_hash": hash_str},
+		"summary_message": "🔐 [KEEPASS] Извлечен хеш за режим 13400 (KeePass)!" if is_bg else "🔐 [KEEPASS] Extracted hash for Mode 13400!"
+	}
+
+static func _convert_rar(rar_path: String, hashes_dir: String, lang: String) -> Dictionary:
+	var is_bg: bool = (lang == "bg")
+	var tool_bin: String = _find_executable("rar2john")
+	if tool_bin.is_empty():
+		return {"success": false, "error": "Липсва rar2john." if is_bg else "Missing rar2john."}
+
+	var base_name: String = rar_path.get_file().get_basename()
+	var out_path: String = hashes_dir + "/" + base_name + ".hash"
+
+	var output: Array = []
+	OS.execute(tool_bin, [rar_path], output, true)
+	if output.is_empty():
+		return {"success": false, "error": "rar2john не върна резултат." if is_bg else "rar2john returned empty."}
+
+	var hash_str: String = ""
+	var mode_id: int = 13000
+	var mode_name: String = "RAR5"
+	for l in str(output[0]).split("\n"):
+		l = l.strip_edges()
+		if "$rar5$" in l:
+			var idx: int = l.find("$rar5$")
+			hash_str = l.substr(idx).strip_edges()
+			mode_id = 13000
+			mode_name = "RAR5"
+			break
+		elif "$rar3$" in l:
+			var idx2: int = l.find("$rar3$")
+			hash_str = l.substr(idx2).strip_edges()
+			mode_id = 12500
+			mode_name = "RAR3-hp"
+			break
+
+	if hash_str.is_empty():
+		return {"success": false, "error": "RAR архивът не е криптиран." if is_bg else "RAR archive is unencrypted."}
+
+	var f: FileAccess = FileAccess.open(out_path, FileAccess.WRITE)
+	if f != null:
+		f.store_string(hash_str + "\n")
+		f.close()
+
+	return {
+		"success": true,
+		"format_label": "RAR Encrypted Archive (.rar)",
+		"target_hash_path": out_path,
+		"hash_mode": mode_id,
+		"hash_mode_name": mode_name,
+		"recommended_flags": "",
+		"metadata": {"raw_hash": hash_str},
+		"summary_message": "📦 [RAR] Извлечен хеш за режим %d (%s)!" % [mode_id, mode_name] if is_bg else "📦 [RAR] Extracted hash for Mode %d!" % mode_id
+	}
 
 static func _convert_ethereum_keystore(json_path: String, hashes_dir: String, lang: String) -> Dictionary:
 	var is_bg: bool = (lang == "bg")

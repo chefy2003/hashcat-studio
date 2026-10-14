@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="Hashcat Intelligence Studio"
 config/description="High-performance neofuturistic desktop GUI for Hashcat."
-run/main_scene="res://scenes/main_wizard.tscn"
+run/main_scene="res://scenes/dashboard_3d.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 
 [display]
@@ -38,6 +38,5 @@ movie_writer/movie_file="/home/deliriumxs/.gemini/antigravity/scratch/hashcat-st
 
 [rendering]
 
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method.mobile="forward_plus"
 environment/defaults/default_clear_color=Color(0.02745098, 0.03529412, 0.05490196, 1)

@@ -19,6 +19,8 @@ signal stop_requested()
 const HardwareInspectorScript = preload("res://scripts/utils/hardware_inspector.gd")
 const HashDatabaseScript = preload("res://scripts/utils/hash_database.gd")
 const FlagDatabaseScript = preload("res://scripts/utils/flag_database.gd")
+const CyberFileExplorerScript = preload("res://scripts/ui/components/cyber_file_explorer.gd")
+const RawIngestEngineScript = preload("res://scripts/utils/raw_ingest_engine.gd")
 
 var _tab_container: TabContainer
 var _slots: Array[Dictionary] = []
@@ -26,15 +28,27 @@ var _lbl_cli_preview: Label
 var _lbl_engine_status: Label
 var _lbl_speed_val: Label
 var _lbl_progress_val: Label
+var _btn_fullscreen: Button
 
 # Attack Configuration Controls
 var _edit_hash: LineEdit
+var _btn_browse_hash: Button
 var _edit_wordlist: LineEdit
+var _btn_browse_wordlist: Button
 var _edit_mask_rules: LineEdit
 var _edit_custom_flags: LineEdit
 var _opt_attack_mode: OptionButton
 var _opt_hash_category: OptionButton
 var _opt_hash_algo: OptionButton
+
+# Cyber File Explorer Component
+var _cyber_explorer: Control
+
+# Hardware Compute Modes & Device Controls
+var _btn_mode_gpu: Button
+var _btn_mode_all: Button
+var _btn_mode_cpu: Button
+var _device_toggle_btns: Dictionary = {}
 
 # Workload Intensity Presets & Hex Controls
 var _selected_workload: int = 2
@@ -106,6 +120,12 @@ func _build_ui() -> void:
 	main_vbox.add_theme_constant_override("separation", 8)
 	root_panel.add_child(main_vbox)
 
+	# In-Terminal Cyber File Explorer Overlay
+	_cyber_explorer = CyberFileExplorerScript.new()
+	_cyber_explorer.file_selected.connect(_on_explorer_file_selected)
+	_cyber_explorer.visible = false
+	root_panel.add_child(_cyber_explorer)
+
 	# 1. Header Bar with Cyberpunk Title and 2D Exit Button
 	var header = HBoxContainer.new()
 	header.add_theme_constant_override("separation", 12)
@@ -125,6 +145,7 @@ func _build_ui() -> void:
 	btn_fullscreen.custom_minimum_size = Vector2(140, 32)
 	btn_fullscreen.toggle_mode = true
 	_style_btn(btn_fullscreen, Color("#0369a1"), Color("#38bdf8"))
+	_btn_fullscreen = btn_fullscreen
 	btn_fullscreen.toggled.connect(func(is_toggled: bool):
 		btn_fullscreen.text = "⛶ 3D ИЗГЛЕД" if is_toggled else "⛶ ЦЯЛ ЕКРАН"
 		request_toggle_fullscreen.emit(is_toggled)
@@ -210,9 +231,17 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 	h_row.add_theme_constant_override("separation", 6)
 	_edit_hash = LineEdit.new()
 	_edit_hash.text = "098f6bcd4621d373cade4e832627b4f6"
+	_edit_hash.placeholder_text = "Въведете хеш или изберете файл..."
 	_edit_hash.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_edit_hash.text_changed.connect(func(_t): _update_cli_preview())
 	h_row.add_child(_edit_hash)
+
+	_btn_browse_hash = Button.new()
+	_btn_browse_hash.text = "📁 ФАЙЛ"
+	_btn_browse_hash.tooltip_text = "Избери файл с хешове от диска"
+	_style_btn(_btn_browse_hash, Color("#0369a1"), Color("#38bdf8"))
+	_btn_browse_hash.pressed.connect(_on_browse_hash_pressed)
+	h_row.add_child(_btn_browse_hash)
 
 	var presets_bar = HBoxContainer.new()
 	presets_bar.add_theme_constant_override("separation", 4)
@@ -332,11 +361,25 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 	lbl_wl.text = "Речник (Wordlist):"
 	grid.add_child(lbl_wl)
 
+	var wl_row = HBoxContainer.new()
+	wl_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wl_row.add_theme_constant_override("separation", 6)
+
 	_edit_wordlist = LineEdit.new()
 	_edit_wordlist.text = "/usr/share/wordlists/rockyou.txt"
+	_edit_wordlist.placeholder_text = "Път до речник (напр. rockyou.txt)..."
 	_edit_wordlist.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_edit_wordlist.text_changed.connect(func(_t): _update_cli_preview())
-	grid.add_child(_edit_wordlist)
+	wl_row.add_child(_edit_wordlist)
+
+	_btn_browse_wordlist = Button.new()
+	_btn_browse_wordlist.text = "📁 РЕЧНИК"
+	_btn_browse_wordlist.tooltip_text = "Избери речник от диска (*.txt, *.dict, *.rule)"
+	_style_btn(_btn_browse_wordlist, Color("#0369a1"), Color("#38bdf8"))
+	_btn_browse_wordlist.pressed.connect(_on_browse_wordlist_pressed)
+	wl_row.add_child(_btn_browse_wordlist)
+
+	grid.add_child(wl_row)
 
 	var lbl_mask = Label.new()
 	lbl_mask.text = "Маска / Правила (-r / Mask):"
@@ -379,6 +422,15 @@ func _build_attack_tab(parent: VBoxContainer) -> void:
 	var intensity_vbox = VBoxContainer.new()
 	intensity_vbox.add_theme_constant_override("separation", 10)
 	right_panel.add_child(intensity_vbox)
+
+	# -------------------------------------------------------------------------
+	# HARDWARE COMPUTE TARGET BAR & DEVICE TOGGLES
+	# -------------------------------------------------------------------------
+	_build_hardware_controls(intensity_vbox)
+
+	var h_sep = HSeparator.new()
+	h_sep.add_theme_stylebox_override("separator", _create_divider_style())
+	intensity_vbox.add_child(h_sep)
 
 	# Section Header
 	var int_header = HBoxContainer.new()
@@ -796,7 +848,19 @@ func _select_hash_algo_id(target_id: int) -> void:
 	for i in range(_opt_hash_algo.item_count):
 		if _opt_hash_algo.get_item_id(i) == target_id:
 			_opt_hash_algo.select(i)
+			_update_cli_preview()
 			return
+	if _opt_hash_category and _opt_hash_category.item_count > 0:
+		_opt_hash_category.select(0)
+		_populate_hash_algorithms("Всички")
+		for i in range(_opt_hash_algo.item_count):
+			if _opt_hash_algo.get_item_id(i) == target_id:
+				_opt_hash_algo.select(i)
+				_update_cli_preview()
+				return
+	_opt_hash_algo.add_item("Крипто Режим (-m %d)" % target_id, target_id)
+	_opt_hash_algo.select(_opt_hash_algo.item_count - 1)
+	_update_cli_preview()
 
 # ==============================================================================
 # HASH DETECTOR LOGIC
@@ -1023,9 +1087,203 @@ func _update_engine_state_ui(state_str: String, col: Color) -> void:
 		_lbl_engine_status.text = "СТАТУС: " + state_str
 		_lbl_engine_status.add_theme_color_override("font_color", col)
 
-# Compatibility helper methods for external sync
-func sync_device_state(_dev_id: int, _enabled: bool) -> void:
+# ==============================================================================
+# HARDWARE COMPUTE CONTROLS & DEVICE BIDIRECTIONAL SYNC
+# ==============================================================================
+func _build_hardware_controls(parent: VBoxContainer) -> void:
+	var hw_header = HBoxContainer.new()
+	hw_header.add_theme_constant_override("separation", 8)
+	var lbl_hw_title = Label.new()
+	lbl_hw_title.text = "ИЗЧИСЛИТЕЛЕН ХАРДУЕР"
+	lbl_hw_title.add_theme_font_size_override("font_size", 15)
+	lbl_hw_title.add_theme_color_override("font_color", Color("#00f0ff"))
+	hw_header.add_child(lbl_hw_title)
+
+	var lbl_hw_sub = Label.new()
+	lbl_hw_sub.text = "(4x GPU + CPU клъстер)"
+	lbl_hw_sub.add_theme_color_override("font_color", Color("#94a3b8"))
+	lbl_hw_sub.add_theme_font_size_override("font_size", 11)
+	hw_header.add_child(lbl_hw_sub)
+
+	var sp = Control.new()
+	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hw_header.add_child(sp)
+
+	var lbl_badge = Label.new()
+	lbl_badge.text = "⚡ РЕЖИМИ"
+	lbl_badge.add_theme_color_override("font_color", Color("#10b981"))
+	lbl_badge.add_theme_font_size_override("font_size", 12)
+	hw_header.add_child(lbl_badge)
+	parent.add_child(hw_header)
+
+	# Quick Compute Mode Presets: [⚡ САМО GPU] | [⚡+🖥️ ВСИЧКИ] | [🖥️ САМО CPU]
+	var mode_bar = HBoxContainer.new()
+	mode_bar.add_theme_constant_override("separation", 6)
+
+	_btn_mode_gpu = Button.new()
+	_btn_mode_gpu.text = "⚡ САМО GPU"
+	_btn_mode_gpu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_btn_mode_gpu.custom_minimum_size = Vector2(0, 32)
+	_style_btn(_btn_mode_gpu, Color("#00f0ff"), Color("#00f0ff"))
+	_btn_mode_gpu.pressed.connect(func():
+		compute_mode_selected.emit("GPU")
+		_set_all_devices_in_terminal(true, false)
+	)
+	mode_bar.add_child(_btn_mode_gpu)
+
+	_btn_mode_all = Button.new()
+	_btn_mode_all.text = "⚡+🖥️ ВСИЧКИ"
+	_btn_mode_all.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_btn_mode_all.custom_minimum_size = Vector2(0, 32)
+	_style_btn(_btn_mode_all, Color("#10b981"), Color("#10b981"))
+	_btn_mode_all.pressed.connect(func():
+		compute_mode_selected.emit("ALL")
+		_set_all_devices_in_terminal(true, true)
+	)
+	mode_bar.add_child(_btn_mode_all)
+
+	_btn_mode_cpu = Button.new()
+	_btn_mode_cpu.text = "🖥️ САМО CPU"
+	_btn_mode_cpu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_btn_mode_cpu.custom_minimum_size = Vector2(0, 32)
+	_style_btn(_btn_mode_cpu, Color("#38bdf8"), Color("#38bdf8"))
+	_btn_mode_cpu.pressed.connect(func():
+		compute_mode_selected.emit("CPU")
+		_set_all_devices_in_terminal(false, true)
+	)
+	mode_bar.add_child(_btn_mode_cpu)
+	parent.add_child(mode_bar)
+
+	# Device list container
+	var dev_list_box = VBoxContainer.new()
+	dev_list_box.add_theme_constant_override("separation", 4)
+
+	_device_toggle_btns.clear()
+	var devices = HardwareInspectorScript.probe_compute_devices()
+	for d in devices:
+		var dev_id: int = d.get("id", 1)
+		var dev_name: String = d.get("name", "Device")
+		var is_cpu: bool = (d.get("type", "") == "CPU")
+		var is_en: bool = d.get("enabled", true)
+
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+
+		var lbl_d = Label.new()
+		var prefix = "🖥️ CPU" if is_cpu else "⚡ GPU"
+		lbl_d.text = "%s #%d: %s" % [prefix, dev_id, dev_name]
+		lbl_d.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl_d.add_theme_font_size_override("font_size", 11)
+		lbl_d.add_theme_color_override("font_color", Color("#e2e8f0"))
+		row.add_child(lbl_d)
+
+		var btn_toggle = Button.new()
+		btn_toggle.custom_minimum_size = Vector2(76, 26)
+		_style_device_btn(btn_toggle, is_en)
+		btn_toggle.pressed.connect(func():
+			var cur_en = HardwareInspectorScript.is_device_enabled(dev_id)
+			var new_en = not cur_en
+			HardwareInspectorScript.set_device_enabled(dev_id, new_en)
+			_style_device_btn(btn_toggle, new_en)
+			device_toggled_in_terminal.emit(dev_id, new_en)
+			_update_cli_preview()
+			_refresh_compute_mode_buttons()
+		)
+		_device_toggle_btns[dev_id] = btn_toggle
+		row.add_child(btn_toggle)
+		dev_list_box.add_child(row)
+
+	parent.add_child(dev_list_box)
+	_refresh_compute_mode_buttons()
+
+func _set_all_devices_in_terminal(enable_gpus: bool, enable_cpus: bool) -> void:
+	var devices = HardwareInspectorScript.probe_compute_devices()
+	for d in devices:
+		var dev_id: int = d.get("id", 1)
+		var is_cpu: bool = (d.get("type", "") == "CPU")
+		var target_en: bool = enable_cpus if is_cpu else enable_gpus
+		HardwareInspectorScript.set_device_enabled(dev_id, target_en)
+		if _device_toggle_btns.has(dev_id):
+			_style_device_btn(_device_toggle_btns[dev_id], target_en)
 	_update_cli_preview()
+	_refresh_compute_mode_buttons()
+
+func _style_device_btn(btn: Button, enabled: bool) -> void:
+	btn.text = "🟢 ВКЛ" if enabled else "🔴 ИЗКЛ"
+	var border_col = Color("#10b981") if enabled else Color("#ef4444")
+	var text_col = Color("#10b981") if enabled else Color("#ef4444")
+	var bg_col = Color("#064e3b66") if enabled else Color("#450a0a66")
+
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = bg_col
+	sb.border_width_left = 1
+	sb.border_width_top = 1
+	sb.border_width_right = 1
+	sb.border_width_bottom = 1
+	sb.border_color = border_col
+	sb.set_corner_radius_all(4)
+	sb.content_margin_left = 6
+	sb.content_margin_right = 6
+	sb.content_margin_top = 2
+	sb.content_margin_bottom = 2
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.add_theme_stylebox_override("hover", sb)
+	btn.add_theme_stylebox_override("pressed", sb)
+	btn.add_theme_color_override("font_color", text_col)
+
+func _style_mode_btn(btn: Button, active: bool, col: Color) -> void:
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = col.darkened(0.7) if active else Color("#07122499")
+	sb.border_width_left = 2 if active else 1
+	sb.border_width_top = 2 if active else 1
+	sb.border_width_right = 2 if active else 1
+	sb.border_width_bottom = 2 if active else 1
+	sb.border_color = col if active else Color("#334155")
+	sb.set_corner_radius_all(5)
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.add_theme_stylebox_override("hover", sb)
+	btn.add_theme_stylebox_override("pressed", sb)
+	btn.add_theme_color_override("font_color", col if active else Color("#94a3b8"))
+
+func _refresh_compute_mode_buttons() -> void:
+	if not _btn_mode_gpu or not _btn_mode_all or not _btn_mode_cpu:
+		return
+	var devices = HardwareInspectorScript.probe_compute_devices()
+	var gpus_on: int = 0
+	var gpus_total: int = 0
+	var cpus_on: int = 0
+	var cpus_total: int = 0
+
+	for d in devices:
+		var is_cpu = (d.get("type", "") == "CPU")
+		var is_en = d.get("enabled", false)
+		if is_cpu:
+			cpus_total += 1
+			if is_en: cpus_on += 1
+		else:
+			gpus_total += 1
+			if is_en: gpus_on += 1
+
+	var is_all_gpu = (gpus_on == gpus_total and cpus_on == 0 and gpus_total > 0)
+	var is_all = (gpus_on == gpus_total and cpus_on == cpus_total and gpus_total > 0)
+	var is_all_cpu = (cpus_on == cpus_total and gpus_on == 0 and cpus_total > 0)
+
+	_style_mode_btn(_btn_mode_gpu, is_all_gpu, Color("#00f0ff"))
+	_style_mode_btn(_btn_mode_all, is_all, Color("#10b981"))
+	_style_mode_btn(_btn_mode_cpu, is_all_cpu, Color("#38bdf8"))
+
+func _create_divider_style() -> StyleBoxLine:
+	var sl = StyleBoxLine.new()
+	sl.color = Color("#1e293b")
+	sl.thickness = 1
+	return sl
+
+# External bidirectional sync from 3D Server Rack
+func sync_device_state(dev_id: int, enabled: bool) -> void:
+	if _device_toggle_btns.has(dev_id):
+		_style_device_btn(_device_toggle_btns[dev_id], enabled)
+	_update_cli_preview()
+	_refresh_compute_mode_buttons()
 
 func update_device_metrics(_dev_id: int, _temp: float, _fan: float, _util: float) -> void:
 	pass
@@ -1050,3 +1308,85 @@ func _style_btn(btn: Button, border_col: Color, text_col: Color) -> void:
 	sb.content_margin_bottom = 5
 	btn.add_theme_stylebox_override("normal", sb)
 	btn.add_theme_color_override("font_color", text_col)
+
+func reset_fullscreen_toggle() -> void:
+	if _btn_fullscreen:
+		_btn_fullscreen.set_pressed_no_signal(false)
+		_btn_fullscreen.text = "⛶ ЦЯЛ ЕКРАН"
+
+func _on_browse_hash_pressed() -> void:
+	if _cyber_explorer:
+		_cyber_explorer.open_for_hash(_edit_hash.text.strip_edges() if _edit_hash else "")
+
+func _on_browse_wordlist_pressed() -> void:
+	if _cyber_explorer:
+		_cyber_explorer.open_for_wordlist(_edit_wordlist.text.strip_edges() if _edit_wordlist else "")
+
+func _on_explorer_file_selected(path: String) -> void:
+	if _cyber_explorer and _cyber_explorer.get("current_mode") == CyberFileExplorerScript.Mode.HASH_FILE:
+		_on_hash_file_selected(path)
+	else:
+		_on_wordlist_file_selected(path)
+
+func _on_hash_file_selected(path: String) -> void:
+	if not FileAccess.file_exists(path):
+		_append_log("[color=#ef4444][ГРЕШКА] Файлът не съществува: %s[/color]" % path)
+		return
+
+	_append_log("[color=#38bdf8][АНАЛИЗАТОР] Обработка на входен файл: %s ...[/color]" % path)
+	var res: Dictionary = RawIngestEngineScript.ingest_file(path, "bg")
+
+	if res.get("success", false):
+		var target_path: String = res.get("target_hash_path", path)
+		if _edit_hash:
+			_edit_hash.text = target_path
+
+		var hash_mode: int = res.get("hash_mode", -1)
+		if hash_mode >= 0:
+			_select_hash_algo_id(hash_mode)
+
+		var rec_flags: String = res.get("recommended_flags", "")
+		if not rec_flags.is_empty() and _edit_custom_flags:
+			var current_flags: String = _edit_custom_flags.text.strip_edges()
+			if not rec_flags in current_flags:
+				if current_flags.is_empty():
+					_edit_custom_flags.text = rec_flags
+				else:
+					_edit_custom_flags.text = current_flags + " " + rec_flags
+
+		# Sample line for detector input if plain text hash file
+		if FileAccess.file_exists(target_path):
+			var f = FileAccess.open(target_path, FileAccess.READ)
+			if f:
+				var sample_line: String = ""
+				while not f.eof_reached():
+					var line = f.get_line().strip_edges()
+					if line.length() > 0 and not line.begins_with("#"):
+						sample_line = line
+						break
+				f.close()
+				if sample_line.length() > 0 and _edit_detector_input:
+					_edit_detector_input.text = sample_line
+					_on_detect_hash_pressed()
+					if hash_mode < 0 and _detected_mode_id >= 0:
+						_select_hash_algo_id(_detected_mode_id)
+
+		var summary: String = res.get("summary_message", "")
+		if not summary.is_empty():
+			for line in summary.split("\n"):
+				_append_log("[color=#10b981]%s[/color]" % line)
+		else:
+			_append_log("[color=#10b981][УСПЕХ] Зареден хеш файл: %s (Режим: -m %d)[/color]" % [target_path, hash_mode])
+	else:
+		var err_msg: String = res.get("error", "Неизвестна грешка при обработка на файла.")
+		_append_log("[color=#ef4444][ГРЕШКА ПРИ ИНГЕСТИРАНЕ] %s[/color]" % err_msg)
+		if _edit_hash:
+			_edit_hash.text = path
+
+	_update_cli_preview()
+
+func _on_wordlist_file_selected(path: String) -> void:
+	if _edit_wordlist:
+		_edit_wordlist.text = path
+	_update_cli_preview()
+	_append_log("[color=#38bdf8][ФАЙЛ] Зареден речник: %s[/color]" % path)

@@ -58,10 +58,10 @@ func _populate_dynamic_units() -> void:
 	if detected_devices.is_empty():
 		detected_devices = [
 			{"id": 5, "name": "Intel Xeon E5-2696 v2", "type": "CPU", "enabled": true},
-			{"id": 1, "name": "AMD Radeon Graphics", "type": "GPU", "enabled": false},
-			{"id": 2, "name": "AMD Radeon Graphics", "type": "GPU", "enabled": false},
-			{"id": 3, "name": "AMD Radeon Graphics", "type": "GPU", "enabled": false},
-			{"id": 4, "name": "AMD Radeon Graphics", "type": "GPU", "enabled": false}
+			{"id": 1, "name": "AMD Radeon Graphics", "type": "GPU", "enabled": true},
+			{"id": 2, "name": "AMD Radeon Graphics", "type": "GPU", "enabled": true},
+			{"id": 3, "name": "AMD Radeon Graphics", "type": "GPU", "enabled": true},
+			{"id": 4, "name": "AMD Radeon Graphics", "type": "GPU", "enabled": true}
 		]
 
 	var num_units: int = detected_devices.size()
@@ -100,7 +100,7 @@ func _populate_dynamic_units() -> void:
 		var dev_name: String = dev.get("name", "Device #" + str(dev_id))
 		var dev_type: String = dev.get("type", "GPU")
 		var is_cpu: bool = (dev_type == "CPU")
-		var default_enabled: bool = dev.get("enabled", is_cpu)
+		var default_enabled: bool = dev.get("enabled", true)
 
 		var unit: RackUnit3D = RackUnit3D.new()
 		unit.name = "Unit_Dev_%d" % dev_id
@@ -175,33 +175,18 @@ func _build_cabinet_chassis(center_y: float, height: float, bottom_y: float, top
 	_interior_light.position = Vector3(0.0, center_y, 0.35)
 	add_child(_interior_light)
 
-	# Physical solid collision body for Server Rack Chassis with Interactable3D
-	var interactable_script = preload("res://scripts/ui/3d/interactable_3d.gd")
-	var rack_body = interactable_script.new()
-	rack_body.name = "RackStaticBody"
-	rack_body.prompt_message = "Преглед на хардуерните възли"
-	rack_body.focused.connect(func():
-		if _interior_light:
-			_interior_light.light_energy = 1.45
-			_interior_light.light_color = Color("#38bdf8")
-	)
-	rack_body.unfocused.connect(func():
-		if _interior_light:
-			_interior_light.light_energy = 0.75
-			_interior_light.light_color = Color("#00a8ff")
-	)
-	rack_body.interacted.connect(func(_actor: Node3D):
-		if _interior_light:
-			var tw = create_tween()
-			tw.tween_property(_interior_light, "light_energy", 2.2, 0.12)
-			tw.tween_property(_interior_light, "light_energy", 1.45, 0.25)
-	)
+	# Physical solid collision body for Server Rack Chassis rear & sides (StaticBody3D)
+	# Positioned at z = -0.3 so front face (z >= 0) is unobstructed for individual card interactables
+	var rack_body = StaticBody3D.new()
+	rack_body.name = "RackChassisCollision"
+	rack_body.collision_layer = 1
+	rack_body.collision_mask = 1
 
 	var col_shape = CollisionShape3D.new()
 	var box_shape = BoxShape3D.new()
-	box_shape.size = Vector3(2.5, height, 0.85)
+	box_shape.size = Vector3(2.5, height, 0.6)
 	col_shape.shape = box_shape
-	col_shape.position = Vector3(0.0, center_y, 0.0)
+	col_shape.position = Vector3(0.0, center_y, -0.3)
 	rack_body.add_child(col_shape)
 	add_child(rack_body)
 

@@ -52,13 +52,13 @@ func _input_event(_camera: Camera3D, event: InputEvent, event_position: Vector3,
 	var mesh_size = quad_mesh.size
 	var local_pos = mesh_instance.global_transform.affine_inverse() * event_position
 
-	var uv = Vector2(
-		(local_pos.x / mesh_size.x) + 0.5,
-		0.5 - (local_pos.y / mesh_size.y)
-	)
+	var raw_u = (local_pos.x / mesh_size.x) + 0.5
+	var raw_v = 0.5 - (local_pos.y / mesh_size.y)
 
-	if uv.x < 0.0 or uv.x > 1.0 or uv.y < 0.0 or uv.y > 1.0:
+	if raw_u < -0.05 or raw_u > 1.05 or raw_v < -0.05 or raw_v > 1.05:
 		return
+
+	var uv = Vector2(clampf(raw_u, 0.0, 1.0), clampf(raw_v, 0.0, 1.0))
 
 	if not is_mouse_inside:
 		is_mouse_inside = true
@@ -81,8 +81,21 @@ func _input_event(_camera: Camera3D, event: InputEvent, event_position: Vector3,
 		if forwarded_event is InputEventMouseMotion:
 			forwarded_event.relative = viewport_pos - last_mouse_pos_2d
 			last_mouse_pos_2d = viewport_pos
+			target_viewport.push_input(forwarded_event)
+		elif forwarded_event is InputEventMouseButton:
+			if forwarded_event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT]:
+				if forwarded_event.factor <= 0.001:
+					forwarded_event.factor = 1.0
+			else:
+				# Ensure SubViewport updates hover and cursor focus immediately prior to button click
+				var motion = InputEventMouseMotion.new()
+				motion.position = viewport_pos
+				motion.global_position = viewport_pos
+				motion.relative = viewport_pos - last_mouse_pos_2d
+				last_mouse_pos_2d = viewport_pos
+				target_viewport.push_input(motion)
 
-		target_viewport.push_input(forwarded_event)
+			target_viewport.push_input(forwarded_event)
 
 func _on_mouse_exited() -> void:
 	if is_mouse_inside:

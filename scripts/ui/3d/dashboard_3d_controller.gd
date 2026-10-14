@@ -20,8 +20,26 @@ var _bridge: Node = null
 var _ambient_sim_timer: float = 0.0
 
 func _ready() -> void:
+	_configure_environment_for_renderer()
+	if camera and holo_terminal:
+		camera.set("holo_terminal", holo_terminal)
 	_setup_engine_bridge()
 	_connect_subsystem_signals()
+
+func _configure_environment_for_renderer() -> void:
+	var world_env: WorldEnvironment = get_node_or_null("WorldEnvironment")
+	if world_env and world_env.environment:
+		var rd = RenderingServer.get_rendering_device()
+		if rd != null:
+			# Vulkan Forward+ active: Enable advanced Screen-Space effects without warnings
+			world_env.environment.ssr_enabled = true
+			world_env.environment.ssil_enabled = true
+			world_env.environment.volumetric_fog_enabled = false
+		else:
+			# OpenGL Compatibility: Keep SSR/SSIL/Fog disabled
+			world_env.environment.ssr_enabled = false
+			world_env.environment.ssil_enabled = false
+			world_env.environment.volumetric_fog_enabled = false
 
 func _setup_engine_bridge() -> void:
 	_bridge = HashcatBridgeScript.new()
@@ -68,7 +86,6 @@ func _connect_subsystem_signals() -> void:
 			if _bridge and _bridge.is_running():
 				_bridge.stop_attack_emergency()
 			request_exit_3d.emit()
-			get_tree().change_scene_to_file("res://scenes/main_wizard.tscn")
 		)
 
 	if holo_terminal:
@@ -166,7 +183,7 @@ func update_telemetry_sample(rate_mhs: float, temp_celsius: float = 48.0, fan_pc
 func _process(delta: float) -> void:
 	if camera and holo_terminal:
 		var dist = camera.global_position.distance_to(holo_terminal.global_position)
-		holo_terminal.set_player_in_range(dist < 5.2)
+		holo_terminal.set_player_in_range(dist < 2.5)
 
 	# Sync energy conduits with quantum core thermal load
 	if holo_core and "heat_level" in holo_core:
@@ -240,10 +257,7 @@ func _unhandled_input(event: InputEvent) -> void:
 						camera.enter_terminal_focus()
 						holo_terminal.set_focused(true)
 						get_viewport().set_input_as_handled()
-				elif camera.camera_mode == DashboardCamera3D.CameraMode.TERMINAL_FOCUS:
-					camera.exit_terminal_focus()
-					holo_terminal.set_focused(false)
-					get_viewport().set_input_as_handled()
+				# When in TERMINAL_FOCUS, KEY_E is not intercepted so the user can type 'e'
 		elif event.keycode == KEY_ESCAPE:
 			if camera and camera.camera_mode == DashboardCamera3D.CameraMode.TERMINAL_FOCUS:
 				camera.exit_terminal_focus()

@@ -11,7 +11,7 @@ extends RayCast3D
 var current_interactable: Node = null
 
 func _ready() -> void:
-	target_position = Vector3(0.0, 0.0, -2.5)
+	target_position = Vector3(0.0, 0.0, -2.6) # Reach distance accommodating physical obstacles
 	enabled = true
 	collide_with_areas = true
 	collide_with_bodies = true
@@ -35,10 +35,13 @@ func _physics_process(_delta: float) -> void:
 
 	if is_colliding():
 		var collider = get_collider()
-		if collider is Interactable3D or (collider != null and collider.has_method("interact")):
-			if current_interactable != collider:
-				_set_focused(collider)
-			return
+		var col_point = get_collision_point()
+		var dist = global_position.distance_to(col_point)
+		if dist <= 2.6:
+			if collider is Interactable3D or (collider != null and collider.has_method("interact")):
+				if current_interactable != collider:
+					_set_focused(collider)
+				return
 
 	_clear_focused()
 
@@ -52,6 +55,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact"):
 		is_interact_pressed = true
 	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_E:
+		is_interact_pressed = true
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		is_interact_pressed = true
 
 	if is_interact_pressed and current_interactable != null:

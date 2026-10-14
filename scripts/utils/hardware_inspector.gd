@@ -26,6 +26,9 @@ static func probe_compute_devices(force_refresh: bool = false) -> Array[Dictiona
 		for line in lines:
 			var trimmed: String = line.strip_edges()
 			if trimmed.ends_with("Info:") or trimmed.ends_with("API:"):
+				if not current_dev.is_empty() and current_dev.has("id"):
+					devices.append(_finalize_device_dict(current_dev, current_backend))
+					current_dev = {}
 				if "HIP" in trimmed:
 					current_backend = "HIP"
 				elif "CUDA" in trimmed:
@@ -89,7 +92,7 @@ static func probe_compute_devices(force_refresh: bool = false) -> Array[Dictiona
 			"memory": g["vram"],
 			"vram": g["vram"],
 			"is_display": g["is_display"],
-			"enabled": false
+			"enabled": true
 		})
 		dev_id_counter += 1
 
@@ -141,8 +144,8 @@ static func _finalize_device_dict(raw: Dictionary, backend: String) -> Dictionar
 		"memory": mem_str,
 		"vram": mem_str,
 		"is_display": false,
-		# By default, CPU is enabled, GPUs start ISOLATED for NUMA/system protection
-		"enabled": (dev_type == "CPU")
+		# By default, compute devices (4x GPUs and CPU) start active and ready
+		"enabled": true
 	}
 
 static func set_device_enabled(dev_id: int, enabled: bool) -> void:
