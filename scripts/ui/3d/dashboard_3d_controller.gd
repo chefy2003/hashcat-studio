@@ -13,6 +13,10 @@ signal devices_selection_changed(active_ids: Array[int], cli_device_flag: String
 @onready var holo_core: Node3D = $HoloCore3D
 @onready var holo_terminal: Node3D = $HoloTerminal3D
 @onready var hashrate_vis: HashrateVisualizer3D = $HashrateVisualizer3D
+@onready var storage_rack: StorageRack3D = get_node_or_null("StorageRack3D")
+@onready var room_enclosure: RoomEnclosure3D = get_node_or_null("RoomEnclosure3D")
+@onready var conduit_storage_terminal: DataTransferConduit3D = get_node_or_null("ConduitStorageToTerminal")
+@onready var conduit_storage_core: DataTransferConduit3D = get_node_or_null("ConduitStorageToCore")
 
 const HashcatBridgeScript = preload("res://scripts/bridge/hashcat_bridge.gd")
 
@@ -73,11 +77,13 @@ func _setup_engine_bridge() -> void:
 		if holo_terminal:
 			holo_terminal.append_console_line("[color=#38bdf8][*] Process finished (code %d).[/color]" % exit_code)
 			holo_terminal.set_engine_running(false)
+		_set_data_streaming(false)
 	)
 	_bridge.emergency_stopped.connect(func():
 		if holo_terminal:
 			holo_terminal.append_console_line("[color=#ef4444][!] Emergency stop complete.[/color]")
 			holo_terminal.set_engine_running(false)
+		_set_data_streaming(false)
 	)
 
 func _connect_subsystem_signals() -> void:
@@ -85,6 +91,7 @@ func _connect_subsystem_signals() -> void:
 		camera.request_exit_3d.connect(func():
 			if _bridge and _bridge.is_running():
 				_bridge.stop_attack_emergency()
+			_set_data_streaming(false)
 			request_exit_3d.emit()
 		)
 
@@ -139,7 +146,8 @@ func _connect_subsystem_signals() -> void:
 
 		holo_terminal.attack_requested.connect(func(args: Array):
 			if _bridge:
-				_bridge.start_attack(args)
+				if _bridge.start_attack(args):
+					_set_data_streaming(true)
 		)
 
 		holo_terminal.benchmark_requested.connect(func():
@@ -150,13 +158,20 @@ func _connect_subsystem_signals() -> void:
 					for p in dev_flag.split(" "):
 						if not p.strip_edges().is_empty():
 							b_args.append(p.strip_edges())
-				_bridge.start_attack(b_args)
+				if _bridge.start_attack(b_args):
+					_set_data_streaming(true)
 		)
 
 		holo_terminal.stop_requested.connect(func():
 			if _bridge:
 				_bridge.stop_attack_emergency()
+			_set_data_streaming(false)
 		)
+
+		if holo_terminal.has_signal("file_selected"):
+			holo_terminal.connect("file_selected", func(ftype: String, fpath: String):
+				_on_file_loaded(ftype, fpath)
+			)
 
 	if server_rack:
 		server_rack.device_toggled.connect(func(dev_id: int, enabled: bool):
@@ -166,6 +181,21 @@ func _connect_subsystem_signals() -> void:
 		)
 
 	_emit_selection_update()
+
+func _on_file_loaded(_ftype: String, fpath: String) -> void:
+	if storage_rack:
+		storage_rack.trigger_read_activity(fpath, 3.0)
+	if conduit_storage_terminal:
+		conduit_storage_terminal.trigger_file_burst(3.0)
+	if conduit_storage_core:
+		conduit_storage_core.trigger_file_burst(2.2)
+
+func _set_data_streaming(active: bool) -> void:
+	if storage_rack:
+		storage_rack.set_streaming(active)
+	for conduit in get_tree().get_nodes_in_group("data_conduits"):
+		if conduit.has_method("set_streaming"):
+			conduit.set_streaming(active)
 
 func _emit_selection_update() -> void:
 	var active_ids = HardwareInspector.get_active_device_ids()

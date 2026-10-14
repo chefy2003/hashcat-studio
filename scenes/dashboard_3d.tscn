@@ -11,6 +11,9 @@
 [ext_resource type="Script" uid="uid://bpsdv32sctmqn" path="res://scripts/ui/3d/cyber_bulkhead_3d.gd" id="10_bulk10"]
 [ext_resource type="Script" uid="uid://36s7pg8celw3" path="res://visual_pipeline/01_environment_lighting/lighting_rig_3d.gd" id="11_rig"]
 [ext_resource type="Script" uid="uid://dan7cehuuu5x7" path="res://visual_pipeline/01_environment_lighting/operations_gantry_3d.gd" id="12_gantry"]
+[ext_resource type="Script" path="res://visual_pipeline/01_environment_lighting/room_enclosure_3d.gd" id="13_enclosure"]
+[ext_resource type="Script" path="res://scripts/ui/3d/storage_rack_3d.gd" id="14_storage"]
+[ext_resource type="Script" path="res://scripts/ui/3d/data_transfer_conduit_3d.gd" id="15_dataconduit"]
 [ext_resource type="Environment" uid="uid://c8k7x4p3v1q0m" path="res://visual_pipeline/01_environment_lighting/env_ops_deck_forward_plus.tres" id="Env_fwd"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
@@ -124,3 +127,20 @@ script = ExtResource("10_bulk10")
 [node name="Bulkhead_RightFront" type="Node3D" parent="." unique_id=118003641]
 transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, 7.8, 0, 4.2)
 script = ExtResource("10_bulk10")
+
+[node name="RoomEnclosure3D" type="Node3D" parent="." unique_id=194820101]
+script = ExtResource("13_enclosure")
+
+[node name="StorageRack3D" type="Node3D" parent="." unique_id=194820102]
+transform = Transform3D(0.422618, 0, -0.906308, 0, 1, 0, 0.906308, 0, 0.422618, 5.8, 0, 0.5)
+script = ExtResource("14_storage")
+
+[node name="ConduitStorageToTerminal" type="Node3D" parent="." unique_id=194820103 groups=["data_conduits"]]
+script = ExtResource("15_dataconduit")
+start_point = Vector3(5.4, 0, 0.3)
+end_point = Vector3(3.77, 0, -2.4)
+
+[node name="ConduitStorageToCore" type="Node3D" parent="." unique_id=194820104 groups=["data_conduits"]]
+script = ExtResource("15_dataconduit")
+start_point = Vector3(5.4, 0, 0.7)
+end_point = Vector3(1.15, 0, 0.2)

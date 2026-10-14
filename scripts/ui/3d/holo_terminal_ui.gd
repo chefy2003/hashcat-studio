@@ -15,6 +15,7 @@ signal request_toggle_fullscreen(is_fullscreen: bool)
 signal attack_requested(args: Array)
 signal benchmark_requested()
 signal stop_requested()
+signal file_selected(file_type: String, file_path: String)
 
 const HardwareInspectorScript = preload("res://scripts/utils/hardware_inspector.gd")
 const HashDatabaseScript = preload("res://scripts/utils/hash_database.gd")
@@ -1384,9 +1385,11 @@ func _on_hash_file_selected(path: String) -> void:
 			_edit_hash.text = path
 
 	_update_cli_preview()
+	file_selected.emit("hash", _edit_hash.text.strip_edges() if _edit_hash else path)
 
 func _on_wordlist_file_selected(path: String) -> void:
 	if _edit_wordlist:
 		_edit_wordlist.text = path
 	_update_cli_preview()
 	_append_log("[color=#38bdf8][ФАЙЛ] Зареден речник: %s[/color]" % path)
+	file_selected.emit("wordlist", path)

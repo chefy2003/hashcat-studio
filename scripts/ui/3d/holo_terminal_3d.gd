@@ -14,6 +14,7 @@ signal request_toggle_fullscreen(is_fullscreen: bool)
 signal attack_requested(args: Array)
 signal benchmark_requested()
 signal stop_requested()
+signal file_selected(file_type: String, file_path: String)
 
 const HoloTerminalUIScript = preload("res://scripts/ui/3d/holo_terminal_ui.gd")
 const Gui3DPanelScript = preload("res://scripts/ui/3d/gui_3d_panel.gd")
@@ -154,6 +155,10 @@ func _build_terminal() -> void:
 	if terminal_ui.has_signal("stop_requested"):
 		terminal_ui.connect("stop_requested", func():
 			stop_requested.emit()
+		)
+	if terminal_ui.has_signal("file_selected"):
+		terminal_ui.connect("file_selected", func(ftype: String, fpath: String):
+			file_selected.emit(ftype, fpath)
 		)
 
 	# 3. Screen QuadMesh (2.5m x 1.56m) with Translucent Hologram Material
