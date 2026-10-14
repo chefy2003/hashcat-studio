@@ -183,51 +183,91 @@ func _build_north_ventilation() -> void:
 
 func _build_south_bulkhead_gate() -> void:
 	# Heavy airlock blast door on South wall (Z = +ROOM_DEPTH * 0.5)
-	var wall_z = ROOM_DEPTH * 0.5 - 0.1
-	var gate_width = 3.6
-	var gate_height = 3.8
+	var half_d = ROOM_DEPTH * 0.5
+	var wall_z = half_d - 0.25
+	var gate_width = 4.0
+	var gate_height = 4.2
 
-	# Door Frame Pillars
+	# Door Frame Pillars (Heavier structural I-Beams)
 	for side in [-1.0, 1.0]:
 		var frame_col = MeshInstance3D.new()
 		var col_mesh = BoxMesh.new()
-		col_mesh.size = Vector3(0.45, gate_height + 0.3, 0.5)
+		col_mesh.size = Vector3(0.55, gate_height + 0.5, 0.6)
 		col_mesh.material = MAT_BEAM
 		frame_col.mesh = col_mesh
-		frame_col.position = Vector3(side * (gate_width * 0.5 + 0.22), gate_height * 0.5, wall_z)
+		frame_col.position = Vector3(side * (gate_width * 0.5 + 0.28), gate_height * 0.5, wall_z - 0.1)
 		add_child(frame_col)
+
+		# Vertical hazard strip on pillar
+		var stripe = MeshInstance3D.new()
+		var st_mesh = BoxMesh.new()
+		st_mesh.size = Vector3(0.10, gate_height, 0.04)
+		var st_mat = StandardMaterial3D.new()
+		st_mat.albedo_color = Color("#f59e0b")
+		st_mat.emission_enabled = true
+		st_mat.emission = Color("#f59e0b")
+		st_mat.emission_energy_multiplier = 2.0
+		stripe.mesh = st_mesh
+		stripe.material_override = st_mat
+		stripe.position = Vector3(side * (gate_width * 0.5 + 0.1), gate_height * 0.5, wall_z - 0.42)
+		add_child(stripe)
 
 	# Door Lintel / Top Header
 	var header = MeshInstance3D.new()
 	var h_mesh = BoxMesh.new()
-	h_mesh.size = Vector3(gate_width + 0.9, 0.5, 0.5)
+	h_mesh.size = Vector3(gate_width + 1.2, 0.6, 0.65)
 	h_mesh.material = MAT_BEAM
 	header.mesh = h_mesh
-	header.position = Vector3(0, gate_height + 0.25, wall_z)
+	header.position = Vector3(0, gate_height + 0.3, wall_z - 0.1)
 	add_child(header)
 
-	# Blast Door Panel (using gate.tres)
+	# Blast Door Panel (using gate.tres) positioned proud of wall
 	var door_panel = MeshInstance3D.new()
 	var d_mesh = BoxMesh.new()
-	d_mesh.size = Vector3(gate_width, gate_height, 0.12)
+	d_mesh.size = Vector3(gate_width, gate_height, 0.18)
 	d_mesh.material = MAT_GATE
 	door_panel.mesh = d_mesh
-	door_panel.position = Vector3(0, gate_height * 0.5, wall_z - 0.05)
+	door_panel.position = Vector3(0, gate_height * 0.5, wall_z - 0.08)
 	add_child(door_panel)
 
-	# Status indicator bar above gate
+	# Overhead high-intensity linear light fixture
+	var lamp = MeshInstance3D.new()
+	var l_mesh = BoxMesh.new()
+	l_mesh.size = Vector3(2.8, 0.14, 0.25)
+	var l_mat = StandardMaterial3D.new()
+	l_mat.albedo_color = Color("#030712")
+	l_mat.emission_enabled = true
+	l_mat.emission = Color("#e2e8f0")
+	l_mat.emission_energy_multiplier = 3.5
+	lamp.mesh = l_mesh
+	lamp.material_override = l_mat
+	lamp.position = Vector3(0, gate_height + 0.35, wall_z - 0.45)
+	add_child(lamp)
+
+	# Status indicator bar above gate (Green Secure)
 	var status_mesh = BoxMesh.new()
-	status_mesh.size = Vector3(1.4, 0.12, 0.08)
+	status_mesh.size = Vector3(1.8, 0.14, 0.1)
 	var s_mat = StandardMaterial3D.new()
 	s_mat.albedo_color = Color("#0f172a")
 	s_mat.emission_enabled = true
 	s_mat.emission = Color("#10b981") # Secure green
-	s_mat.emission_energy_multiplier = 2.0
+	s_mat.emission_energy_multiplier = 2.4
 	status_mesh.material = s_mat
 	var status_inst = MeshInstance3D.new()
 	status_inst.mesh = status_mesh
-	status_inst.position = Vector3(0, gate_height + 0.45, wall_z + 0.15)
+	status_inst.position = Vector3(0, gate_height + 0.65, wall_z - 0.42)
 	add_child(status_inst)
+
+	# Text signage above gate
+	var gate_lbl = Label3D.new()
+	gate_lbl.text = "AIRLOCK BULKHEAD // RESTRICTED ACCESS"
+	gate_lbl.font_size = 24
+	gate_lbl.pixel_size = 0.0028
+	gate_lbl.modulate = Color("#00f0ff")
+	gate_lbl.outline_modulate = Color("#0369a1")
+	gate_lbl.outline_size = 4
+	gate_lbl.position = Vector3(0, gate_height + 0.9, wall_z - 0.42)
+	add_child(gate_lbl)
 
 func _build_perimeter_walkways() -> void:
 	# Diamond-plate steel border walkways with neon edge strip
