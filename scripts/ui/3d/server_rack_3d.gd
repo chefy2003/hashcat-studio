@@ -8,6 +8,9 @@ extends Node3D
 signal device_toggled(dev_id: int, enabled: bool)
 signal device_clicked(dev_id: int)
 
+const MAT_PANEL = preload("res://materials/se_metal/metalhull02.tres")
+const MAT_FRAME = preload("res://materials/se_metal/quarryibeama.tres")
+
 @export var rack_name: String = "PRIMARY COMPUTE CHASSIS"
 
 var _units: Array[RackUnit3D] = []
@@ -65,19 +68,19 @@ func _populate_dynamic_units() -> void:
 		]
 
 	var num_units: int = detected_devices.size()
-	var unit_spacing: float = 0.40
-	var y_start: float = 0.22
+	var unit_spacing: float = 0.44
+	var y_start: float = 0.28
 	var y_end: float = y_start + float(num_units - 1) * unit_spacing
 
 	var post_center_y: float = (y_start + y_end) * 0.5
-	var post_height: float = max(2.3, (y_end - y_start) + 0.65)
+	var post_height: float = max(2.5, (y_end - y_start) + 0.7)
 	var bottom_plate_y: float = y_start - 0.22
-	var top_plate_y: float = y_end + 0.22
+	var top_plate_y: float = y_end + 0.24
 
 	# 1. Build Cabinet Structure
 	_build_cabinet_chassis(post_center_y, post_height, bottom_plate_y, top_plate_y)
 
-	# 2. Sort devices: CPU on top, GPUs below in ascending ID order
+	# 2. Sort devices: GPUs on lower shelves, CPU on topmost shelf
 	var cpu_devices: Array[Dictionary] = []
 	var gpu_devices: Array[Dictionary] = []
 
@@ -88,8 +91,6 @@ func _populate_dynamic_units() -> void:
 			gpu_devices.append(dev)
 
 	var ordered_devices: Array[Dictionary] = []
-	# GPUs from bottom up or top down:
-	# Place GPUs on lower shelves, CPU on topmost shelf
 	ordered_devices.append_array(gpu_devices)
 	ordered_devices.append_array(cpu_devices)
 
@@ -132,13 +133,7 @@ func _populate_dynamic_units() -> void:
 		_units.append(unit)
 
 func _build_cabinet_chassis(center_y: float, height: float, bottom_y: float, top_y: float) -> void:
-	# PBR Metallic material: dark slate steel (metallic 0.8, roughness 0.3)
-	var rail_mat = StandardMaterial3D.new()
-	rail_mat.albedo_color = Color("#222d3d")
-	rail_mat.metallic = 0.8
-	rail_mat.roughness = 0.3
-
-	# 4 Corner Vertical Posts
+	# 4 Corner Vertical Posts (I-Beam material)
 	var post_x = 1.3
 	var post_z = 0.6
 	var post_positions = [
@@ -153,7 +148,7 @@ func _build_cabinet_chassis(center_y: float, height: float, bottom_y: float, top
 		var post_mesh = BoxMesh.new()
 		post_mesh.size = Vector3(0.08, height, 0.08)
 		post.mesh = post_mesh
-		post.material_override = rail_mat
+		post.material_override = MAT_FRAME
 		post.position = pos
 		add_child(post)
 
@@ -161,22 +156,53 @@ func _build_cabinet_chassis(center_y: float, height: float, bottom_y: float, top
 	for y in [bottom_y, top_y]:
 		var plate = MeshInstance3D.new()
 		var plate_mesh = BoxMesh.new()
-		plate_mesh.size = Vector3(2.7, 0.06, 1.3)
+		plate_mesh.size = Vector3(2.7, 0.08, 1.3)
 		plate.mesh = plate_mesh
-		plate.material_override = rail_mat
+		plate.material_override = MAT_FRAME
 		plate.position = Vector3(0.0, y, 0.0)
 		add_child(plate)
 
-	# Discrete Cool-Blue OmniLight inside the rack
+	# Side Panels (Left & Right)
+	for side in [-1.0, 1.0]:
+		var side_panel = MeshInstance3D.new()
+		var sp_mesh = BoxMesh.new()
+		sp_mesh.size = Vector3(0.04, height - 0.16, 1.15)
+		side_panel.mesh = sp_mesh
+		side_panel.material_override = MAT_PANEL
+		side_panel.position = Vector3(side * (post_x + 0.02), center_y, 0.0)
+		add_child(side_panel)
+
+	# Top Diegetic Header Marquee
+	var header_bar = MeshInstance3D.new()
+	var h_mesh = BoxMesh.new()
+	h_mesh.size = Vector3(2.5, 0.14, 0.06)
+	var h_mat = StandardMaterial3D.new()
+	h_mat.albedo_color = Color("#020617")
+	h_mat.metallic = 0.9
+	header_bar.mesh = h_mesh
+	header_bar.material_override = h_mat
+	header_bar.position = Vector3(0.0, top_y + 0.12, post_z + 0.02)
+	add_child(header_bar)
+
+	var header_lbl = Label3D.new()
+	header_lbl.text = "PRIMARY COMPUTE CHASSIS // 4x GPU + 1x CPU"
+	header_lbl.font_size = 20
+	header_lbl.pixel_size = 0.0022
+	header_lbl.modulate = Color("#00f0ff")
+	header_lbl.outline_modulate = Color("#0369a1")
+	header_lbl.outline_size = 3
+	header_lbl.position = Vector3(0.0, top_y + 0.12, post_z + 0.06)
+	add_child(header_lbl)
+
+	# Internal Cool-Blue illumination
 	_interior_light = OmniLight3D.new()
-	_interior_light.light_color = Color("#00a8ff") # Cool Blue
-	_interior_light.light_energy = 0.75
-	_interior_light.omni_range = 3.6
-	_interior_light.position = Vector3(0.0, center_y, 0.35)
+	_interior_light.light_color = Color("#00a8ff")
+	_interior_light.light_energy = 1.2
+	_interior_light.omni_range = 4.2
+	_interior_light.position = Vector3(0.0, center_y, 0.4)
 	add_child(_interior_light)
 
-	# Physical solid collision body for Server Rack Chassis rear & sides (StaticBody3D)
-	# Positioned at z = -0.3 so front face (z >= 0) is unobstructed for individual card interactables
+	# Physical solid collision body
 	var rack_body = StaticBody3D.new()
 	rack_body.name = "RackChassisCollision"
 	rack_body.collision_layer = 1
@@ -184,9 +210,8 @@ func _build_cabinet_chassis(center_y: float, height: float, bottom_y: float, top
 
 	var col_shape = CollisionShape3D.new()
 	var box_shape = BoxShape3D.new()
-	box_shape.size = Vector3(2.5, height, 0.6)
+	box_shape.size = Vector3(2.6, height, 0.7)
 	col_shape.shape = box_shape
-	col_shape.position = Vector3(0.0, center_y, -0.3)
+	col_shape.position = Vector3(0.0, center_y, -0.25)
 	rack_body.add_child(col_shape)
 	add_child(rack_body)
-

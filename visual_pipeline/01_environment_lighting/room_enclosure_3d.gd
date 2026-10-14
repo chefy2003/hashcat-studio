@@ -2,8 +2,8 @@ class_name RoomEnclosure3D
 extends Node3D
 
 ## High-Security Operations Citadel Enclosure.
-## Provides physical walls, structural ceiling I-beam trusses, ventilation turbines,
-## heavy blast bulkhead gate, perimeter diamond-plate walkways, and physical collision bounds.
+## Provides physical walls, structural ceiling I-beam trusses, industrial ceiling bays with LED light banks,
+## longitudinal ventilation ducts, cable trays, ventilation turbines, heavy airlock gate, and collision bounds.
 
 const MAT_WALL = preload("res://materials/se_metal/metalhull02.tres")
 const MAT_CEILING = preload("res://materials/se_metal/metalhull01.tres")
@@ -23,6 +23,7 @@ var _fan_speed: float = 3.2
 func _ready() -> void:
 	_build_room_geometry()
 	_build_roof_trusses()
+	_build_ceiling_architecture()
 	_build_north_ventilation()
 	_build_south_bulkhead_gate()
 	_build_perimeter_walkways()
@@ -47,12 +48,12 @@ func _build_room_geometry() -> void:
 	# East Wall (X = +half_w)
 	_create_wall_segment(Vector3(half_w + WALL_THICKNESS * 0.5, half_h, 0), Vector3(WALL_THICKNESS, ROOM_HEIGHT, ROOM_DEPTH), MAT_WALL)
 
-	# Ceiling (Y = ROOM_HEIGHT)
+	# Structural Ceiling Plate (Y = ROOM_HEIGHT)
 	var ceiling_mesh = BoxMesh.new()
 	ceiling_mesh.size = Vector3(ROOM_WIDTH + 1.0, WALL_THICKNESS, ROOM_DEPTH + 1.0)
 	ceiling_mesh.material = MAT_CEILING
 	var ceiling_inst = MeshInstance3D.new()
-	ceiling_inst.name = "Ceiling"
+	ceiling_inst.name = "CeilingPlate"
 	ceiling_inst.mesh = ceiling_mesh
 	ceiling_inst.position = Vector3(0, ROOM_HEIGHT + WALL_THICKNESS * 0.5, 0)
 	add_child(ceiling_inst)
@@ -81,7 +82,7 @@ func _build_roof_trusses() -> void:
 		var beam = MeshInstance3D.new()
 		beam.name = "TrussBeam_%d" % i
 		beam.mesh = beam_mesh
-		beam.position = Vector3(0, ROOM_HEIGHT - 0.35, z_pos)
+		beam.position = Vector3(0, ROOM_HEIGHT - 0.25, z_pos)
 		add_child(beam)
 
 		# Vertical supports on left and right walls
@@ -98,15 +99,125 @@ func _build_roof_trusses() -> void:
 		for side in [-1.0, 1.0]:
 			var bracket = MeshInstance3D.new()
 			var b_mesh = BoxMesh.new()
-			b_mesh.size = Vector3(1.2, 0.15, 0.2)
+			b_mesh.size = Vector3(1.4, 0.16, 0.22)
 			b_mesh.material = MAT_BEAM
 			bracket.mesh = b_mesh
-			bracket.position = Vector3(side * (ROOM_WIDTH * 0.5 - 0.7), ROOM_HEIGHT - 0.7, z_pos)
+			bracket.position = Vector3(side * (ROOM_WIDTH * 0.5 - 0.8), ROOM_HEIGHT - 0.65, z_pos)
 			bracket.rotation_degrees = Vector3(0, 0, -side * 35.0)
 			add_child(bracket)
 
+		# Upward-aimed truss uplight illuminating the ceiling ribs
+		if i in [1, 3]:
+			var uplight = OmniLight3D.new()
+			uplight.position = Vector3(0, ROOM_HEIGHT - 0.6, z_pos)
+			uplight.light_color = Color("#38bdf8")
+			uplight.light_energy = 0.85
+			uplight.omni_range = 6.0
+			add_child(uplight)
+
+func _build_ceiling_architecture() -> void:
+	# 1. Modular Overhead Industrial LED Light Banks (2 rows x 3 columns)
+	var x_coords = [-5.2, 0.0, 5.2]
+	var z_coords = [-3.8, 3.8]
+
+	var frame_mat = StandardMaterial3D.new()
+	frame_mat.albedo_color = Color("#0f172a")
+	frame_mat.metallic = 0.9
+	frame_mat.roughness = 0.25
+
+	var diffuser_mat = StandardMaterial3D.new()
+	diffuser_mat.albedo_color = Color("#f8fafc")
+	diffuser_mat.emission_enabled = true
+	diffuser_mat.emission = Color("#f8fafc")
+	diffuser_mat.emission_energy_multiplier = 3.8
+
+	for xi in range(x_coords.size()):
+		for zi in range(z_coords.size()):
+			var px = x_coords[xi]
+			var pz = z_coords[zi]
+
+			# Recessed Light Frame
+			var frame = MeshInstance3D.new()
+			var f_mesh = BoxMesh.new()
+			f_mesh.size = Vector3(3.0, 0.16, 1.8)
+			frame.mesh = f_mesh
+			frame.material_override = frame_mat
+			frame.position = Vector3(px, ROOM_HEIGHT - 0.08, pz)
+			add_child(frame)
+
+			# Emissive Diffuser Glass Panel
+			var panel = MeshInstance3D.new()
+			var p_mesh = BoxMesh.new()
+			p_mesh.size = Vector3(2.8, 0.04, 1.6)
+			panel.mesh = p_mesh
+			panel.material_override = diffuser_mat
+			panel.position = Vector3(px, ROOM_HEIGHT - 0.16, pz)
+			add_child(panel)
+
+			# Downward Daylight Illumination
+			var light = OmniLight3D.new()
+			light.position = Vector3(px, ROOM_HEIGHT - 0.45, pz)
+			light.light_color = Color("#f1f5f9")
+			light.light_energy = 1.2
+			light.omni_range = 8.5
+			add_child(light)
+
+	# 2. Dual Massive Longitudinal Ventilation Ducts (Connecting to North Turbines)
+	for duct_x in [-4.5, 4.5]:
+		var duct = MeshInstance3D.new()
+		var d_mesh = CylinderMesh.new()
+		d_mesh.top_radius = 0.52
+		d_mesh.bottom_radius = 0.52
+		d_mesh.height = ROOM_DEPTH - 0.8
+		d_mesh.radial_segments = 24
+		d_mesh.material = MAT_WALL
+		duct.mesh = d_mesh
+		duct.position = Vector3(duct_x, ROOM_HEIGHT - 0.75, 0.0)
+		duct.rotation_degrees = Vector3(90, 0, 0)
+		add_child(duct)
+
+		# Reinforcement Flange Rings along the duct
+		for ring_z in [-5.0, -2.5, 0.0, 2.5, 5.0]:
+			var ring = MeshInstance3D.new()
+			var r_mesh = TorusMesh.new()
+			r_mesh.inner_radius = 0.51
+			r_mesh.outer_radius = 0.58
+			ring.mesh = r_mesh
+			ring.material_override = frame_mat
+			ring.position = Vector3(duct_x, ROOM_HEIGHT - 0.75, ring_z)
+			ring.rotation_degrees = Vector3(90, 0, 0)
+			add_child(ring)
+
+	# 3. Suspended Central Cable Tray / High-Voltage Conduits
+	var tray = MeshInstance3D.new()
+	var tr_mesh = BoxMesh.new()
+	tr_mesh.size = Vector3(0.65, 0.08, ROOM_DEPTH - 1.0)
+	tray.mesh = tr_mesh
+	tray.material_override = frame_mat
+	tray.position = Vector3(0.0, ROOM_HEIGHT - 0.95, 0.0)
+	add_child(tray)
+
+	# High-voltage orange and cyan conduit cables inside tray
+	var cable_colors = [Color("#f59e0b"), Color("#00f0ff"), Color("#10b981")]
+	for ci in range(cable_colors.size()):
+		var cable = MeshInstance3D.new()
+		var c_mesh = CylinderMesh.new()
+		c_mesh.top_radius = 0.04
+		c_mesh.bottom_radius = 0.04
+		c_mesh.height = ROOM_DEPTH - 1.2
+		c_mesh.radial_segments = 12
+		var c_mat = StandardMaterial3D.new()
+		c_mat.albedo_color = cable_colors[ci]
+		c_mat.emission_enabled = true
+		c_mat.emission = cable_colors[ci]
+		c_mat.emission_energy_multiplier = 0.6
+		cable.mesh = c_mesh
+		cable.material_override = c_mat
+		cable.position = Vector3(-0.16 + float(ci) * 0.16, ROOM_HEIGHT - 0.90, 0.0)
+		cable.rotation_degrees = Vector3(90, 0, 0)
+		add_child(cable)
+
 func _build_north_ventilation() -> void:
-	# Twin industrial ventilation turbines on the North wall (Z = -ROOM_DEPTH * 0.5)
 	var fan_x_offsets = [-4.5, 4.5]
 	var fan_y = 3.6
 	var wall_z = -ROOM_DEPTH * 0.5 + 0.15
@@ -114,7 +225,6 @@ func _build_north_ventilation() -> void:
 	for i in range(fan_x_offsets.size()):
 		var fx = fan_x_offsets[i]
 
-		# Outer circular duct frame (hexagonal / cylinder casing)
 		var casing = MeshInstance3D.new()
 		var c_mesh = CylinderMesh.new()
 		c_mesh.top_radius = 1.15
@@ -127,7 +237,6 @@ func _build_north_ventilation() -> void:
 		casing.rotation_degrees = Vector3(90, 0, 0)
 		add_child(casing)
 
-		# Emissive warning rim inside casing
 		var rim = MeshInstance3D.new()
 		var r_mesh = TorusMesh.new()
 		r_mesh.inner_radius = 0.98
@@ -142,13 +251,11 @@ func _build_north_ventilation() -> void:
 		rim.rotation_degrees = Vector3(90, 0, 0)
 		add_child(rim)
 
-		# Rotating blade hub & assembly
 		var fan_hub = Node3D.new()
 		fan_hub.name = "VentTurbine_%d" % i
 		fan_hub.position = Vector3(fx, fan_y, wall_z + 0.05)
 		add_child(fan_hub)
 
-		# Central axle cap
 		var hub_cap = MeshInstance3D.new()
 		var h_mesh = CylinderMesh.new()
 		h_mesh.top_radius = 0.28
@@ -159,7 +266,6 @@ func _build_north_ventilation() -> void:
 		hub_cap.rotation_degrees = Vector3(90, 0, 0)
 		fan_hub.add_child(hub_cap)
 
-		# 6 turbine blades
 		var blade_mat = StandardMaterial3D.new()
 		blade_mat.albedo_color = Color("#1e293b")
 		blade_mat.metallic = 0.85
@@ -169,8 +275,8 @@ func _build_north_ventilation() -> void:
 			var blade = MeshInstance3D.new()
 			var b_mesh = BoxMesh.new()
 			b_mesh.size = Vector3(0.18, 0.72, 0.04)
-			b_mesh.material = blade_mat
 			blade.mesh = b_mesh
+			blade.material_override = blade_mat
 			blade.position = Vector3(0, 0.45, 0)
 			blade.rotation_degrees = Vector3(0, 18, 0)
 
@@ -182,13 +288,11 @@ func _build_north_ventilation() -> void:
 		_fan_blades.append(fan_hub)
 
 func _build_south_bulkhead_gate() -> void:
-	# Heavy airlock blast door on South wall (Z = +ROOM_DEPTH * 0.5)
 	var half_d = ROOM_DEPTH * 0.5
 	var wall_z = half_d - 0.25
 	var gate_width = 4.0
 	var gate_height = 4.2
 
-	# Door Frame Pillars (Heavier structural I-Beams)
 	for side in [-1.0, 1.0]:
 		var frame_col = MeshInstance3D.new()
 		var col_mesh = BoxMesh.new()
@@ -198,7 +302,6 @@ func _build_south_bulkhead_gate() -> void:
 		frame_col.position = Vector3(side * (gate_width * 0.5 + 0.28), gate_height * 0.5, wall_z - 0.1)
 		add_child(frame_col)
 
-		# Vertical hazard strip on pillar
 		var stripe = MeshInstance3D.new()
 		var st_mesh = BoxMesh.new()
 		st_mesh.size = Vector3(0.10, gate_height, 0.04)
@@ -212,7 +315,6 @@ func _build_south_bulkhead_gate() -> void:
 		stripe.position = Vector3(side * (gate_width * 0.5 + 0.1), gate_height * 0.5, wall_z - 0.42)
 		add_child(stripe)
 
-	# Door Lintel / Top Header
 	var header = MeshInstance3D.new()
 	var h_mesh = BoxMesh.new()
 	h_mesh.size = Vector3(gate_width + 1.2, 0.6, 0.65)
@@ -221,7 +323,6 @@ func _build_south_bulkhead_gate() -> void:
 	header.position = Vector3(0, gate_height + 0.3, wall_z - 0.1)
 	add_child(header)
 
-	# Blast Door Panel (using gate.tres) positioned proud of wall
 	var door_panel = MeshInstance3D.new()
 	var d_mesh = BoxMesh.new()
 	d_mesh.size = Vector3(gate_width, gate_height, 0.18)
@@ -230,7 +331,6 @@ func _build_south_bulkhead_gate() -> void:
 	door_panel.position = Vector3(0, gate_height * 0.5, wall_z - 0.08)
 	add_child(door_panel)
 
-	# Overhead high-intensity linear light fixture
 	var lamp = MeshInstance3D.new()
 	var l_mesh = BoxMesh.new()
 	l_mesh.size = Vector3(2.8, 0.14, 0.25)
@@ -244,13 +344,12 @@ func _build_south_bulkhead_gate() -> void:
 	lamp.position = Vector3(0, gate_height + 0.35, wall_z - 0.45)
 	add_child(lamp)
 
-	# Status indicator bar above gate (Green Secure)
 	var status_mesh = BoxMesh.new()
 	status_mesh.size = Vector3(1.8, 0.14, 0.1)
 	var s_mat = StandardMaterial3D.new()
 	s_mat.albedo_color = Color("#0f172a")
 	s_mat.emission_enabled = true
-	s_mat.emission = Color("#10b981") # Secure green
+	s_mat.emission = Color("#10b981")
 	s_mat.emission_energy_multiplier = 2.4
 	status_mesh.material = s_mat
 	var status_inst = MeshInstance3D.new()
@@ -258,7 +357,6 @@ func _build_south_bulkhead_gate() -> void:
 	status_inst.position = Vector3(0, gate_height + 0.65, wall_z - 0.42)
 	add_child(status_inst)
 
-	# Text signage above gate
 	var gate_lbl = Label3D.new()
 	gate_lbl.text = "AIRLOCK BULKHEAD // RESTRICTED ACCESS"
 	gate_lbl.font_size = 24
@@ -270,32 +368,26 @@ func _build_south_bulkhead_gate() -> void:
 	add_child(gate_lbl)
 
 func _build_perimeter_walkways() -> void:
-	# Diamond-plate steel border walkways with neon edge strip
 	var half_w = ROOM_WIDTH * 0.5
 	var half_d = ROOM_DEPTH * 0.5
 	var border_w = 0.85
 	var step_h = 0.05
 
-	# Strip emission material
 	var strip_mat = StandardMaterial3D.new()
 	strip_mat.albedo_color = Color("#0f172a")
 	strip_mat.emission_enabled = true
 	strip_mat.emission = Color("#00f0ff")
 	strip_mat.emission_energy_multiplier = 1.4
 
-	# North Walkway
 	_create_walkway_segment(Vector3(0, step_h * 0.5, -half_d + border_w * 0.5), Vector3(ROOM_WIDTH, step_h, border_w))
 	_create_strip(Vector3(0, step_h + 0.01, -half_d + border_w), Vector3(ROOM_WIDTH, 0.01, 0.04), strip_mat)
 
-	# South Walkway
 	_create_walkway_segment(Vector3(0, step_h * 0.5, half_d - border_w * 0.5), Vector3(ROOM_WIDTH, step_h, border_w))
 	_create_strip(Vector3(0, step_h + 0.01, half_d - border_w), Vector3(ROOM_WIDTH, 0.01, 0.04), strip_mat)
 
-	# West Walkway
 	_create_walkway_segment(Vector3(-half_w + border_w * 0.5, step_h * 0.5, 0), Vector3(border_w, step_h, ROOM_DEPTH - border_w * 2.0))
 	_create_strip(Vector3(-half_w + border_w, step_h + 0.01, 0), Vector3(0.04, 0.01, ROOM_DEPTH - border_w * 2.0), strip_mat)
 
-	# East Walkway
 	_create_walkway_segment(Vector3(half_w - border_w * 0.5, step_h * 0.5, 0), Vector3(border_w, step_h, ROOM_DEPTH - border_w * 2.0))
 	_create_strip(Vector3(half_w - border_w, step_h + 0.01, 0), Vector3(0.04, 0.01, ROOM_DEPTH - border_w * 2.0), strip_mat)
 
@@ -326,13 +418,9 @@ func _build_collision_bounds() -> void:
 	var half_d = ROOM_DEPTH * 0.5
 	var half_h = ROOM_HEIGHT * 0.5
 
-	# North Collision
 	_add_wall_collision(static_body, Vector3(0, half_h, -half_d), Vector3(ROOM_WIDTH, ROOM_HEIGHT, 0.5))
-	# South Collision
 	_add_wall_collision(static_body, Vector3(0, half_h, half_d), Vector3(ROOM_WIDTH, ROOM_HEIGHT, 0.5))
-	# West Collision
 	_add_wall_collision(static_body, Vector3(-half_w, half_h, 0), Vector3(0.5, ROOM_HEIGHT, ROOM_DEPTH))
-	# East Collision
 	_add_wall_collision(static_body, Vector3(half_w, half_h, 0), Vector3(0.5, ROOM_HEIGHT, ROOM_DEPTH))
 
 func _add_wall_collision(body: StaticBody3D, pos: Vector3, size: Vector3) -> void:
