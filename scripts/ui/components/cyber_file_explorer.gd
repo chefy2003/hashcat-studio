@@ -81,6 +81,10 @@ func _init_and_show(target_path: String) -> void:
 				current_dir = "/"
 
 	_load_directory(current_dir)
+	if _edit_path:
+		_edit_path.text = current_dir
+		_edit_path.grab_focus()
+		_edit_path.select_all()
 
 func close() -> void:
 	visible = false
@@ -175,6 +179,7 @@ func _build_ui() -> void:
 	_edit_path = LineEdit.new()
 	_edit_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_edit_path.text_submitted.connect(_on_path_entered)
+	_style_line_edit(_edit_path)
 	path_bar.add_child(_edit_path)
 
 	var btn_go = Button.new()
@@ -190,7 +195,8 @@ func _build_ui() -> void:
 
 	_edit_search = LineEdit.new()
 	_edit_search.placeholder_text = "Търси име..."
-	_edit_search.custom_minimum_size = Vector2(180, 0)
+	_edit_search.custom_minimum_size = Vector2(180, 36)
+	_style_line_edit(_edit_search)
 	_edit_search.text_changed.connect(func(_t): _render_lists())
 	path_bar.add_child(_edit_search)
 
@@ -609,6 +615,37 @@ func _style_btn(btn: Button, border_col: Color, bg_col: Color) -> void:
 	btn.add_theme_stylebox_override("hover", sb)
 	btn.add_theme_stylebox_override("pressed", sb)
 	btn.add_theme_color_override("font_color", Color("#ffffff"))
+
+func _style_line_edit(le: LineEdit) -> void:
+	le.custom_minimum_size = Vector2(0, 36)
+	le.add_theme_font_size_override("font_size", 14)
+	le.add_theme_color_override("font_color", Color("#ffffff"))
+	le.add_theme_color_override("caret_color", Color("#00f0ff"))
+	le.add_theme_color_override("selection_color", Color(0.0, 0.94, 1.0, 0.35))
+	le.caret_blink = true
+	le.caret_blink_interval = 0.5
+
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.04, 0.08, 0.15, 0.95)
+	sb.border_width_left = 1
+	sb.border_width_top = 1
+	sb.border_width_right = 1
+	sb.border_width_bottom = 1
+	sb.border_color = Color("#00f0ff")
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 10
+	sb.content_margin_right = 10
+	sb.content_margin_top = 6
+	sb.content_margin_bottom = 6
+	le.add_theme_stylebox_override("normal", sb)
+
+	var sb_focus = sb.duplicate() as StyleBoxFlat
+	sb_focus.border_color = Color("#38bdf8")
+	sb_focus.border_width_left = 2
+	sb_focus.border_width_top = 2
+	sb_focus.border_width_right = 2
+	sb_focus.border_width_bottom = 2
+	le.add_theme_stylebox_override("focus", sb_focus)
 
 func _handle_list_wheel_input(event: InputEvent, list: ItemList) -> void:
 	if event is InputEventMouseButton and event.pressed:

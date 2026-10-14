@@ -161,6 +161,13 @@ func _build_terminal() -> void:
 			file_selected.emit(ftype, fpath)
 		)
 
+	if terminal_ui.get("_cyber_explorer") != null:
+		var explorer = terminal_ui._cyber_explorer as Control
+		explorer.visibility_changed.connect(func():
+			if explorer.visible:
+				terminal_activated.emit()
+		)
+
 	# 3. Screen QuadMesh (2.5m x 1.56m) with Translucent Hologram Material
 	screen_mesh = MeshInstance3D.new()
 	screen_mesh.name = "ScreenMesh"

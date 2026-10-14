@@ -89,7 +89,8 @@ var _raycast: RayCast3D = null
 var _hud_layer: CanvasLayer = null
 var _hud_prompt_label: Label = null
 var _hud_reticle: Control = null
-var current_mouse_mode: Input.MouseMode = Input.MOUSE_MODE_CAPTURED
+var current_mouse_mode: Input.MouseMode = Input.MOUSE_MODE_VISIBLE
+var _is_rmb_looking: bool = false
 
 
 func set_mouse_mode(mode: Input.MouseMode) -> void:
@@ -105,8 +106,8 @@ func _ready() -> void:
 	_setup_physics_body()
 	_setup_interaction_hud()
 	switch_preset(ViewPreset.OPERATOR_FRONT, 0.0)
-	# Lock mouse cursor on entry to FPS walking mode
-	set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	# Default to fully visible cursor for desktop GUI ergonomics
+	set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func _exit_tree() -> void:
 	set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -339,8 +340,8 @@ func switch_preset(preset: ViewPreset, duration: float = 0.6) -> void:
 		_char_body.velocity = Vector3.ZERO
 
 func _physics_process(delta: float) -> void:
-	# While locked in Terminal Focus mode, walking movement is disabled
-	if camera_mode == CameraMode.TERMINAL_FOCUS:
+	# While locked in Terminal Focus mode or interacting with UI/text fields, walking movement is disabled
+	if _is_ui_active():
 		return
 
 	# If a preset transition tween is active, don't override camera transform
@@ -472,14 +473,62 @@ func _move_with_collision(motion: Vector3) -> Vector3:
 
 var holo_terminal: Node3D = null
 
-func _unhandled_input(event: InputEvent) -> void:
-	# In Terminal Focus, forward all keyboard and mouse wheel events directly to the terminal's SubViewport
+func _is_ui_active() -> bool:
 	if camera_mode == CameraMode.TERMINAL_FOCUS:
+		return true
+	if not holo_terminal:
+		return false
+	var vp = holo_terminal.get("viewport") as SubViewport
+	if not vp:
+		return false
+	if vp.gui_get_focus_owner() != null:
+		return true
+	var term_ui = holo_terminal.get("terminal_ui")
+	if term_ui and term_ui.get("_cyber_explorer") != null:
+		var explorer = term_ui._cyber_explorer as Control
+		if explorer and explorer.visible:
+			return true
+	return false
+
+func _unhandled_input(event: InputEvent) -> void:
+	# 1. RMB-Drag for 3D Camera Free Look: Hold Right Mouse Button to look around, release to free mouse
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.pressed:
+			_is_rmb_looking = true
+			set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		else:
+			_is_rmb_looking = false
+			set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		get_viewport().set_input_as_handled()
+		return
+
+	if event is InputEventMouseMotion and _is_rmb_looking:
+		rotation_degrees.y -= event.relative.x * mouse_sensitivity
+		rotation_degrees.x = clamp(rotation_degrees.x - event.relative.y * mouse_sensitivity, -75.0, 75.0)
+		get_viewport().set_input_as_handled()
+		return
+
+	# 2. When UI, Dialog, or Terminal is active, route all keyboard/wheel events to the SubViewport
+	if _is_ui_active():
 		if event is InputEventKey:
-			if event.pressed and (event.keycode == KEY_ESCAPE or (event.keycode == KEY_E and not _is_terminal_text_field_focused())):
-				exit_terminal_focus()
-				get_viewport().set_input_as_handled()
-				return
+			var term_ui = holo_terminal.get("terminal_ui") if holo_terminal else null
+			var is_explorer_open: bool = false
+			if term_ui and term_ui.get("_cyber_explorer") != null:
+				var explorer = term_ui._cyber_explorer as Control
+				if explorer and explorer.visible:
+					is_explorer_open = true
+
+			if event.pressed and event.keycode == KEY_ESCAPE:
+				if is_explorer_open:
+					term_ui._cyber_explorer.close()
+					get_viewport().set_input_as_handled()
+					return
+				if camera_mode == CameraMode.TERMINAL_FOCUS:
+					exit_terminal_focus()
+					get_viewport().set_input_as_handled()
+					return
+
+			# Route keystroke to SubViewport
 			if holo_terminal and holo_terminal.get("viewport") != null:
 				var term_vp = holo_terminal.get("viewport") as SubViewport
 				if term_vp:
@@ -487,26 +536,14 @@ func _unhandled_input(event: InputEvent) -> void:
 					get_viewport().set_input_as_handled()
 					return
 
-		# Direct mouse wheel routing to SubViewport (since Godot 3D physics picking does not pick wheel events)
+		# Direct mouse wheel routing to SubViewport
 		if event is InputEventMouseButton and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT]:
 			if _forward_wheel_to_terminal(event):
 				get_viewport().set_input_as_handled()
 				return
 		return
 
-	# Re-capture mouse on left click if focus was lost in free flight
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if current_mouse_mode != Input.MOUSE_MODE_CAPTURED:
-			set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-			get_viewport().set_input_as_handled()
-			return
-
-	# First-person mouse look (pitch and yaw directly from mouse motion)
-	if event is InputEventMouseMotion and (current_mouse_mode == Input.MOUSE_MODE_CAPTURED or Input.mouse_mode == Input.MOUSE_MODE_CAPTURED):
-		rotation_degrees.y -= event.relative.x * mouse_sensitivity
-		rotation_degrees.x = clamp(rotation_degrees.x - event.relative.y * mouse_sensitivity, -75.0, 75.0)
-
-	# Single-tap Jump trigger via Space
+	# 3. Space Jump (only in free-flight when not typing)
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_SPACE:
 			if not _is_jumping and not _is_crouching and _jump_offset <= 0.001:
@@ -517,7 +554,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 
-	# Quick Preset Hotkeys: 1/F1, 2/F2, 3/F3, 4/F4, 5/F5
+	# 4. Quick Preset Hotkeys (only when not typing in UI): 1/F1, 2/F2, 3/F3, 4/F4, 5/F5
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
 			KEY_ESCAPE:
