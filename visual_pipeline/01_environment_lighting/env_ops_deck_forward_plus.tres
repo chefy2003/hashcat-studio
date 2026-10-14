@@ -1,4 +1,4 @@
-[gd_resource type="Environment" load_steps=3 format=3 uid="uid://c8k7x4p3v1q0m"]
+[gd_resource type="Environment" format=3 uid="uid://c8k7x4p3v1q0m"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_deck"]
 sky_top_color = Color(0.012, 0.02, 0.035, 1)
@@ -20,37 +20,26 @@ ambient_light_energy = 1.15
 tonemap_mode = 4
 tonemap_exposure = 1.02
 tonemap_white = 5.5
-ssr_enabled = false
-ssr_max_steps = 64
-ssr_fade_in = 0.15
-ssr_fade_out = 2.0
 ssr_depth_tolerance = 0.25
 ssao_enabled = true
 ssao_radius = 1.6
 ssao_intensity = 2.4
 ssao_power = 1.4
-ssao_detail = 0.5
-ssao_horizon = 0.06
-ssil_enabled = false
 ssil_radius = 4.5
 ssil_intensity = 1.2
 ssil_sharpness = 0.95
 glow_enabled = true
 glow_normalized = true
 glow_intensity = 0.85
-glow_strength = 1.0
 glow_bloom = 0.16
+glow_blend_mode = 0
 glow_hdr_threshold = 0.92
 glow_hdr_scale = 1.3
 glow_hdr_luminance_cap = 5.0
-glow_blend_mode = 0
-volumetric_fog_enabled = false
 volumetric_fog_density = 0.007
 volumetric_fog_albedo = Color(0.02, 0.045, 0.07, 1)
-volumetric_fog_emission = Color(0.0, 0.0, 0.0, 1)
 volumetric_fog_emission_energy = 0.0
 volumetric_fog_anisotropy = 0.42
 volumetric_fog_length = 50.0
 volumetric_fog_ambient_inject = 0.15
-volumetric_fog_temporal_reprojection = true
 volumetric_fog_temporal_reprojection_amount = 0.92
