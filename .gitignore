@@ -1,26 +1,29 @@
-# Godot 4 build & runtime artifacts
-.godot/
-*.translation
-*.import
-export_presets.godot
+# Unreal Engine Gitignore for Hashcat Studio Pro
 
-# C++ GDExtension compilation
-.sconsign.dblite
-*.o
-*.os
-*.so
-*.dylib
-*.dll
-bin/
+# Engine temporary & built directories
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
 
-# Temporary / OS files
-.DS_Store
-*.tmp
+# Core dumps and logs
 *.log
-scratch/
-test_*.py
-*.avi
-*.mp4
+gpucore.*
+core.*
+
+# User-specific settings & workspaces
+.idea/
+.vscode/
+*.VC.db
+*.opendb
+*.sln
+*.suo
+*.user
+*.workspace
+
+# OS files
+.DS_Store
+Thumbs.db
 __pycache__/
 *.pyc
-extension_api.json
