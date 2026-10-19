@@ -2,10 +2,8 @@
 
 <div align="center">
 
-![Engine](https://img.shields.io/badge/Unreal_Engine-5.8.3_Linux-0E1128?logo=unrealengine)
-![Vulkan](https://img.shields.io/badge/Vulkan-SM5_Native-red?logo=vulkan)
-![Hardware](https://img.shields.io/badge/GPU_Cluster-4x_AMD_MI25_(64GB)-blue)
-![Platform](https://img.shields.io/badge/OS-Linux_NUMA_0,1-orange?logo=linux)
+![Engine](https://img.shields.io/badge/Unreal_Engine-5.8-0E1128?logo=unrealengine)
+![Platform](https://img.shields.io/badge/OS-Linux-orange?logo=linux)
 ![Languages](https://img.shields.io/badge/Languages-BG_%F0%9F%87%A7%F0%9F%87%AC_%7C_EN_%F0%9F%87%AC%F0%9F%87%A7-brightgreen)
 
 **Next-Generation Spatial Operations & Cryptanalytic Intelligence Environment**  
