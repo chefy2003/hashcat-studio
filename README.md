@@ -1,4 +1,4 @@
-# Hashcat Studio Pro // Spatial Operating System
+# Hashcat Studio Pro // Spatial Offensive Security Tool
 
 <div align="center">
 
