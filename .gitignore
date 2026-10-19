@@ -27,3 +27,7 @@ core.*
 Thumbs.db
 __pycache__/
 *.pyc
+
+# Local workspace context files
+MASTER_CONTEXT.md
+Context/
