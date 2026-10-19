@@ -85,20 +85,9 @@ hashcat-studio/
 
 ---
 
-## 💻 Launching & Development
+## 🚧 STILL UNDER DEVELOPMENT
 
-### Requirements
-- **Unreal Engine 5.8+** (Linux x86_64 build)
-- **Vulkan SM5** drivers (`vulkan-tools`, ROCm/AMDGPU Pro drivers)
-- **Python 3.10+** (with `unreal` module enabled in Editor settings)
-
-### Launching Standalone Game
-```bash
-numactl --cpunodebind=0,1 --interleave=all \
-  /path/to/UnrealEditor \
-  /path/to/hashcat-studio/HashcatStudio.uproject \
-  -game -vulkan -sm5 -ResX=1920 -ResY=1080 -WinX=0 -WinY=0 -log
-```
+*Hashcat Studio Pro is currently under active development. Release builds and packaging instructions will be made available soon.*
 
 ---
 
