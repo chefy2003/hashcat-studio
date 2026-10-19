@@ -42,9 +42,6 @@ Built natively on **Unreal Engine 5.8 (Linux Vulkan SM5)**, engineered for multi
 - **Hardware Architecture**: 4x AMD Instinct MI25 GPUs (Vega 10, 16GB HBM2 each, total 64GB VRAM) running under ROCm with Linux NUMA balancing (`--cpunodebind=0,1 --interleave=all`).
 - **Telemetry System: Diegetic real-time wall screens tracking live GPU core temperatures, package wattage draw, compute hash rates, and attack dictionary progress.
 
-### 4. Remote Automation & Telegram Bot Commander
-- Integrated asynchronous IPC daemon enabling real-time remote commands, status telemetry, and live camera snapshot streaming straight to Telegram.
-
 ---
 
 ## 🎮 Controls & Key Bindings
