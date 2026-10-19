@@ -23,7 +23,7 @@ Built natively on **Unreal Engine 5.8 (Linux Vulkan SM5)**, engineered for multi
 
 ## 🚀 Key Features & Architecture
 
-### 1. Cyberpunk 2077 Breach Protocol HUD & Settings Subsystem (`WBP_SettingsMenu`)
+### 1. HUD & Settings Subsystem (`WBP_SettingsMenu`)
 - **Centralized Subsystem Daemons**:
   - `01 // DISPLAY & RESOLUTION`: Live resolution matrix switching (1080p FHD, 1440p 2K, 4K UHD, 720p HD) and instant Fullscreen / Windowed display modes via native `UGameUserSettings`.
   - `02 // GRAPHICS & RENDER`: Scalability presets (Low 66%, Medium 75%, High 100%, Epic Max Quality) with live render scale feedback and framerate limits (60 FPS, 120 FPS, Uncapped).
@@ -33,18 +33,17 @@ Built natively on **Unreal Engine 5.8 (Linux Vulkan SM5)**, engineered for multi
   - Instant in-game language toggle button (`Btn_LangToggle`) located directly in the Cyberpunk Top Header bar.
   - Dynamically updates all 56+ labels, daemon titles, section descriptions, live indicators, and buttons across both Bulgarian and English without restarting the engine.
 
-### 2. First-Person Operator (`BP_operator`)
+### 2. First-Person Operator
 - Clean, tactile operator movement with tactical sprint, jumping, and crouch navigation.
 - Invisible high-precision interaction trace with zero intrusive laser debug artifacts.
-- Atmospheric dual-language terminal telemetry prompts (`[ ВЗАИМОДЕЙСТВИЕ // INTERACT ]: ВРЪЗКАТА Е УСПЕШНА // LINK ESTABLISHED!`).
+- Atmospheric dual-language terminal telemetry prompts (BG/EN More will be added).
 
 ### 3. Compute Infrastructure & Hardware Orchestration
 - **Hardware Architecture**: 4x AMD Instinct MI25 GPUs (Vega 10, 16GB HBM2 each, total 64GB VRAM) running under ROCm with Linux NUMA balancing (`--cpunodebind=0,1 --interleave=all`).
-- **Telemetry System (`BP_WallTelemetry`)**: Diegetic real-time wall screens tracking live GPU core temperatures, package wattage draw, compute hash rates, and attack dictionary progress.
+- **Telemetry System: Diegetic real-time wall screens tracking live GPU core temperatures, package wattage draw, compute hash rates, and attack dictionary progress.
 
 ### 4. Remote Automation & Telegram Bot Commander
-- Integrated asynchronous IPC daemon (`127.0.0.1:8822`) enabling real-time remote commands, status telemetry, and live camera snapshot streaming straight to Telegram.
-- Unreal MCP and Web Remote Control automation layer (`Tools/ue_mcp.py`, `Tools/run_ue_py.py`) for live runtime inspection and continuous deployment.
+- Integrated asynchronous IPC daemon enabling real-time remote commands, status telemetry, and live camera snapshot streaming straight to Telegram.
 
 ---
 
@@ -110,5 +109,5 @@ numactl --cpunodebind=0,1 --interleave=all \
 
 ## 📜 License & Credits
 
-Developed by **chefy2003** & **Antigravity AI**.  
+Developed by **The Puppeteer**  
 All rights reserved © 2026 Hashcat Studio Pro.
