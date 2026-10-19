@@ -85,7 +85,7 @@ hashcat-studio/
 │   ├── run_ue_py.py            # Headless UE python command runner
 │   ├── wire_language_switcher  # Blueprint localization wiring pipeline
 │   └── ...
-├── RA21_Spatial_OS.uproject    # Unreal Engine 5.8 Project Descriptor
+├── HashcatStudio.uproject    # Unreal Engine 5.8 Project Descriptor
 └── README.md                   # System documentation
 ```
 
@@ -102,7 +102,7 @@ hashcat-studio/
 ```bash
 numactl --cpunodebind=0,1 --interleave=all \
   /path/to/UnrealEditor \
-  /path/to/hashcat-studio/RA21_Spatial_OS.uproject \
+  /path/to/hashcat-studio/HashcatStudio.uproject \
   -game -vulkan -sm5 -ResX=1920 -ResY=1080 -WinX=0 -WinY=0 -log
 ```
 
